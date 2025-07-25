@@ -1,7 +1,0 @@
----
-title: Test Document
----
-
-![Test Image](images/unemployment_rate_recent_graduate.png){#fig-test}
-
-This is a reference to the figure: @fig-test.
