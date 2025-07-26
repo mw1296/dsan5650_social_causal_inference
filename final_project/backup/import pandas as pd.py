@@ -39,4 +39,4 @@ for i in range(0, len(folder_path_list)):
     merged_df = create_df_race(folder_path, demographic_type, "Year", "Month", "Unemployment_rate")
     df_dic[demographic_type] = merged_df
 
-list(df_dic.values())[4]
+#list(df_dic.values())[4]
