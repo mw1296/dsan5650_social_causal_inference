@@ -1,0 +1,161 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "385c3881",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "title: \"Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate and durations\"\n",
+    "author:\n",
+    "    name: Mengjia Wei\n",
+    "    email: mw1296@georgetown.edu\n",
+    "    affiliation: Georgetown University\n",
+    "keywords:\n",
+    "  - PGM\n",
+    "  - Unemployment Rate\n",
+    "  - Unemployment Durations\n",
+    "  - Causal Inference\n",
+    "abstract: |\n",
+    "  This study investigates the causal relationships between age, occupation, race, and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: time (2015, 2024 and 2025) and group attributes (age, race, and industry). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates by major across 2024 and 2025. A second dimension of analysis focuses on industry-specific unemployment rate dynamics from 2015 to 2025, particularly in [retail], [arts], and [technology] sectors, and how these intersect with racial and age groups. In addition to rate-based measures, the study explores how unemployment duration has evolved between 2015 and 2025 across different occupations and age cohorts. This analysis seeks to identify whether certain groups—such as []—face longer or shorter periods of unemployment today compared to a decade ago, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that recent college graduates in [] majors had a higher unemployment rate of [ ]% in 2025 H1 compared to [ ]% in 2024 H1. Additionally, the [retail], [arts], and [technology] industries experienced increased unemployment rates between 2015 and 2025, with respective changes of [ ], [ ], and [ ] percentage points. The findings also suggest that, consistent with earlier research, unemployment duration is negatively correlated with the unemployment rate by occupation, with industries exhibiting higher unemployment often associated with shorter average durations (Chien, Y., & Morris, P., 2016). The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among [e.g., Black or Hispanic workers] in the [e.g., retail or hospitality] sector. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.\n",
+    "plain-language-summary: |\n",
+    "  TBD\n",
+    "key-points:\n",
+    "  - TBD\n",
+    "  - TBD\n",
+    "date: last-modified\n",
+    "bibliography: references.bib\n",
+    "citation:\n",
+    "  container-title: Georgetown Univeristy DSAN 5650 Journal\n",
+    "number-sections: true\n",
+    "jupyter: python3\n",
+    "---\n",
+    "\n",
+    "## Introduction\n",
+    "\n",
+    "The interplay of demographic characteristics and labor market dynamics consistently reveals significant disparities in unemployment rates. Decades of research reveal a persistent relationship between race, gender, and unemployment, evident across diverse economic cycles. Though the Black unemployment rate fell to a historic low of 6.1% in 2019, it was still twice as high as the White unemployment rate of 3.0%, as @ValerieWilson2022 observed. These disparities are further magnified at the intersection of race and gender. For instance, Black men faced a 6.1% unemployment rate in February 2024, notably higher than Black women at 4.4%. Similarly, Hispanic women's unemployment rate increased to 5.0% in February 2024, while Hispanic men experienced a decrease to 4.0% (@Joseph2024). Native American men also experienced higher unemployment (10%) than Native American women (7%) in 2022. Industry-specific analyses similarly highlight divergent unemployment trends. The Leisure and Hospitality sector reported the highest unemployment rate at 6.0% in 2024, an increase from 5.5% in 2023. Similarly, Wholesale and Retail Trade experienced elevated unemployment, reaching 4.7% in October 2024, up from 4.0% in 2023. Conversely, Financial Activities maintained a significantly lower unemployment rate of 1.9% (@Oberlo2024). \n",
+    "\n",
+    "Research from the U.S. Bureau of Labor Statistics consistently shows longer unemployment spells in sectors such as Manufacturing and Construction, while industries demanding specialized skills like Education and Health Services exhibit shorter durations. Study by @YiLiChienandPaulMorris reveals negative correlation between the unemployment rate and duration. Such variations in both the rate and duration of unemployment underscore complex interactions among race, gender, age, and industry.\n",
+    "\n",
+    "@TOIEducation2025 published that the labor market for recent college graduates has \"deteriorated noticeably\" in the first quarter of 2025. The unemployment rate for this cohort (ages 22-27) ranged from 5.5% to 7.1%, exceeding the overall national average of 4.1-4.2%, with Anthropology (9.4%), Physics (7.8%), and Computer Engineering (7.5%) showing among the highest rates. \n",
+    "\n",
+    "![Unemployment Rate of Recent College Graduates](images/unemployment_rate_recent_graduate.png){#fig-graduates}\n",
+    "\n",
+    "Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025, recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, particularly affecting recent college graduates (@fig-graduates). \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "bfb7dc2b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import numpy as np\n",
+    "eruptions = [1492, 1585, 1646, 1677, 1712, 1949, 1971, 2021]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "fig-timeline",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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",
+      "text/plain": [
+       "<Figure size 576x96 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "#| label: fig-timeline\n",
+    "#| fig-cap: Timeline of recent earthquakes on La Palma\n",
+    "#| fig-alt: An event plot of the years of the last 8 eruptions on La Palma.\n",
+    "\n",
+    "plt.figure(figsize=(6, 1))\n",
+    "plt.eventplot(eruptions, lineoffsets=0, linelengths=0.1, color='black')\n",
+    "plt.gca().axes.get_yaxis().set_visible(False)\n",
+    "plt.ylabel('')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7e6ff76e",
+   "metadata": {},
+   "source": [
+    "Eight eruptions have been recorded since the late 1400s (@fig-timeline).\n",
+    "\n",
+    "$$\n",
+    "p(x) = \\frac{e^{-\\lambda} \\lambda^{x}}{x !}\n",
+    "$$ {#eq-poisson}\n",
+    "\n",
+    "where $\\lambda$ is the rate of eruptions per year. Using @eq-poisson, the probability of an eruption in the next $t$ years can be calculated.\n",
+    "\n",
+    "| Name                | Year |\n",
+    "|---------------------|------|\n",
+    "| Current             | 2021 |\n",
+    "| Teneguía            | 1971 |\n",
+    "| Nambroque           | 1949 |\n",
+    "| El Charco           | 1712 |\n",
+    "| Volcán San Antonio  | 1677 |\n",
+    "| Volcán San Martin   | 1646 |\n",
+    "| Tajuya near El Paso | 1585 |\n",
+    "| Montaña Quemada     | 1492 |\n",
+    "\n",
+    ": Recent historic eruptions on La Palma {#tbl-history}\n",
+    "\n",
+    "@tbl-history summarises the eruptions recorded since the colonization of the islands by Europeans in the late 1400s.\n",
+    "\n",
+    "![Map of La Palma](images/la-palma-map.png){#fig-map}\n",
+    "\n",
+    "La Palma is one of the west most islands in the Volcanic Archipelago of the Canary Islands (@fig-map).\n",
+    "\n",
+    "{{< embed notebooks/data-screening.qmd#fig-spatial-plot >}}\n",
+    "\n",
+    "@fig-spatial-plot shows the location of recent Earthquakes on La Palma.\n",
+    "\n",
+    "Data and methods are discussed in @sec-data-methods.\n",
+    "\n",
+    "Let $x$ denote the number of eruptions in a year. Then, $x$ can be modeled by a Poisson distribution\n",
+    "\n",
+    "## Data & Methods {#sec-data-methods}\n",
+    "\n",
+    "## Conclusion\n",
+    "\n",
+    "## References {.unnumbered}\n",
+    "\n",
+    "::: {#refs}\n",
+    ":::"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3",
+   "path": "/Users/kirawei/.pyenv/versions/3.11.5/share/jupyter/kernels/python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

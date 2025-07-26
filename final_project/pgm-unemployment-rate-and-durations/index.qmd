@@ -34,7 +34,7 @@ Research from the U.S. Bureau of Labor Statistics consistently shows longer unem
 
 ![Unemployment Rate of Recent College Graduates](images/unemployment_rate_recent_graduate.png){#fig-graduates}
 
-Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025, recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, particularly affecting recent college graduates (@fig-graduates). 
+Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025, recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, reaching 2021 levels and particularly affecting recent college graduates (@fig-graduates). 
 
 
 ```{python}
