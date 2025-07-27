@@ -85,9 +85,13 @@ for i in range(0, len(folder_path_list)):
     df_dic[demographic_type] = merged_df
 
 #list(df_dic.values())[0]
+```
+```{python}
+# Data pre-processing
+# 2. Load and process monthly unemployment file, unemployment duration file
+
 
 ```
-
 
 ## EDA
 ### Unemployment Rates of Differenet Demographics
@@ -133,32 +137,36 @@ for i in range(0, len(df_dic.keys())-1):
 #| label: fig-histogram-unemployment-rate-demographics
 #| fig-cap: Unemployment Rate Distributions By Demographics (2015-2025 statistics)
 #| fig-alt: Histogram plots of the unemployment rate distributins by Age, Sex, Race, Industry and Education Attainment using 2015-2025 BLS data
+
+# Display this graph separately from the preious chuck in order to add the aritcle label
 df_plot = list(df_dic.values())[len(df_dic.keys())-1]
 demographic_type = list(df_dic.keys())[len(df_dic.keys())-1]
 print(f"Unemployment Rate Distribution Histograms By {demographic_type}")
 plot_hist(df_plot, demographic_type)
 ```
-BLS data from 2015–2025 shows the Black or African American group with the highest average unemployment rate (7.5%), mostly between 5–10%. Gender differences are minimal, with both sexes averaging around 5%, though men slightly higher. Leisure and Hospitality leads industries with the highest rate (10%) and a long-tail distribution. Agriculture follows with 5–11% and moderate variation. Construction and Mining/Oil & Gas show similar but slightly lower patterns. Financial Activities has the lowest and most stable unemployment, concentrated below 5% (@fig-histogram-unemployment-rate-demographics).
+BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil & Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (@fig-histogram-unemployment-rate-demographics).
 
 
+## PGM
+We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
+```{python}
+# Create variable "baseline" as baseline level of unemployment rate
+
+# Create variable - unemployment_vulnerability 
+unemployment_vulnerability = pm.math.invlogit(
+        baseline # baseline unemployment rate
+        + race_effect[race]
+        + age_effect[age]
+        + education_effect[education_attainment]
+        + industry_effect[industry]
+    )
+```
 ```{python}
 import matplotlib.pyplot as plt
 import numpy as np
 eruptions = [1492, 1585, 1646, 1677, 1712, 1949, 1971, 2021]
 ```
 
-```{python}
-#| label: fig-timeline
-#| fig-cap: Timeline of recent earthquakes on La Palma
-#| fig-alt: An event plot of the years of the last 8 eruptions on La Palma.
-
-plt.figure(figsize=(6, 1))
-plt.eventplot(eruptions, lineoffsets=0, linelengths=0.1, color='black')
-plt.gca().axes.get_yaxis().set_visible(False)
-plt.ylabel('')
-plt.show()
-```
-Eight eruptions have been recorded since the late 1400s (@fig-timeline).
 
 $$
 p(x) = \frac{e^{-\lambda} \lambda^{x}}{x !}
