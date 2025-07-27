@@ -99,7 +99,7 @@ def plot_hist(df_plot, demographic_type):
     num_unique_categories = len(unique_categories)
     ncol = 2
     nrow = np.int64(np.ceil(num_unique_categories/ncol))
-    fig, axes = plt.subplots(ncols=ncol, nrows=nrow, sharex=True, sharey=True, figsize = (12,nrow*6))
+    fig, axes = plt.subplots(ncols=ncol, nrows=nrow, sharex=True, sharey=True, figsize = (12, nrow*6))
     axes = axes.flatten()
     min_rate = df_plot['Unemployment_rate'].min()
     max_rate = df_plot['Unemployment_rate'].max()
