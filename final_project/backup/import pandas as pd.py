@@ -39,4 +39,36 @@ for i in range(0, len(folder_path_list)):
     merged_df = create_df_race(folder_path, demographic_type, "Year", "Month", "Unemployment_rate")
     df_dic[demographic_type] = merged_df
 
-#list(df_dic.values())[4]
+list(df_dic.values())[4]
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_hist(df_plot, demographic_type):
+    unique_categories = df_plot[demographic_type].unique()
+    num_unique_categories = len(unique_categories)
+    ncol = 2
+    nrow = np.int64(np.ceil(num_unique_categories/ncol))
+    fig, axes = plt.subplots(ncols=ncol, nrows=nrow, sharex=True, sharey=True, figsize = (12,nrow*6))
+    axes = axes.flatten()
+    min_rate = df_plot['Unemployment_rate'].min()
+    max_rate = df_plot['Unemployment_rate'].max()
+    num_bins = 20 
+    bins = np.linspace(min_rate, max_rate, num_bins + 1)
+    for i, category in enumerate(unique_categories):
+        ax = axes[i]
+        vals = df_plot[df_plot[demographic_type]==category]['Unemployment_rate']
+        ax.hist(vals, bins=bins, alpha=0.7, color='skyblue', edgecolor='black')
+        ax.set_title(category, fontsize=12)
+        ax.set_xlabel('Unemployment Rate', fontsize=10)
+        ax.set_ylabel('Count', fontsize=10)
+    plt.tight_layout()
+    plt.suptitle(f'Unemployment Rate Distribution by {demographic_type}', y=1.02, fontsize=18) 
+    plt.show()
+    
+#df_plot = list(df_dic.values())[2]
+#demographic_type = list(df_dic.keys())[2]
+#plot_hist(df_plot, demographic_type)
+
+
+
