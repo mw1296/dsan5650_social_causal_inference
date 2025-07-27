@@ -88,9 +88,11 @@ for i in range(0, len(folder_path_list)):
 ```
 ```{python}
 # Data pre-processing
-# 2. Load and process monthly unemployment file, unemployment duration file
+# 2. Load and process monthly unemployment overall file
+df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
+df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="Unemployment_rate")
 
-
+# 3. Load and process monthly unemployment duration by industry file
 ```
 
 ## EDA
@@ -146,6 +148,24 @@ plot_hist(df_plot, demographic_type)
 ```
 BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil & Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (@fig-histogram-unemployment-rate-demographics).
 
+```{python}
+#| label: fig-histogram-unemployment-rate
+#| fig-cap: Overall Unemployment Rate Distributions (2015-2025 statistics)
+#| fig-alt: Histogram plot of the overall population unemployment rate distributins using 2015-2025 BLS data
+min_rate = df_overall_long['Unemployment_rate'].min()
+max_rate = df_overall_long['Unemployment_rate'].max()
+num_bins = 20
+bins = np.linspace(min_rate, max_rate, num_bins)
+fig, ax = plt.subplots(figsize = (8, 8))
+ax.hist(df_overall_long['Unemployment_rate'], bins=bins, alpha=0.7, color='skyblue', edgecolor='black')
+ax.axvline(np.mean(df_overall_long['Unemployment_rate']), color="black", linestyle="--")
+ax.set_xlabel("Unemployment Rate", fontsize=10)
+ax.set_ylabel("Count", fontsize=10)
+plt.tight_layout()
+plt.suptitle("Population Unemployment Rate", y =1.02, fontsize=18)
+plt.show()
+```
+According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (@fig-histogram-unemployment-rate).
 
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
@@ -153,13 +173,13 @@ We posit that unemployment vulnerability is driven by structural inequalities wi
 # Create variable "baseline" as baseline level of unemployment rate
 
 # Create variable - unemployment_vulnerability 
-unemployment_vulnerability = pm.math.invlogit(
-        baseline # baseline unemployment rate
-        + race_effect[race]
-        + age_effect[age]
-        + education_effect[education_attainment]
-        + industry_effect[industry]
-    )
+# unemployment_vulnerability = pm.math.invlogit(
+#         baseline # baseline unemployment rate
+#         + race_effect[race]
+#         + age_effect[age]
+#         + education_effect[education_attainment]
+#         + industry_effect[industry]
+#     )
 ```
 ```{python}
 import matplotlib.pyplot as plt
