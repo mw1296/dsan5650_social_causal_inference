@@ -199,3 +199,4 @@ weibull_stats = {
 }
 weibull_stats_table = pd.DataFrame(weibull_stats, index=False)
 display(weibull_stats_table.style.hide(axis='index'))
+

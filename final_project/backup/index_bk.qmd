@@ -88,9 +88,11 @@ for i in range(0, len(folder_path_list)):
 ```
 ```{python}
 # Data pre-processing
-# 2. Load and process monthly unemployment file, unemployment duration file
+# 2. Load and process monthly unemployment overall file
+df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
+df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="Unemployment_rate")
 
-
+# 3. Load and process monthly unemployment duration by industry file
 ```
 
 ## EDA
@@ -138,28 +140,224 @@ for i in range(0, len(df_dic.keys())-1):
 #| fig-cap: Unemployment Rate Distributions By Demographics (2015-2025 statistics)
 #| fig-alt: Histogram plots of the unemployment rate distributins by Age, Sex, Race, Industry and Education Attainment using 2015-2025 BLS data
 
-# Display this graph separately from the preious chuck in order to add the aritcle label
+## 2. Plot the overall umemployment rate 
+## Display this graph separately from the preious chuck in order to add the aritcle label
 df_plot = list(df_dic.values())[len(df_dic.keys())-1]
 demographic_type = list(df_dic.keys())[len(df_dic.keys())-1]
 print(f"Unemployment Rate Distribution Histograms By {demographic_type}")
 plot_hist(df_plot, demographic_type)
+
 ```
 BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil & Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (@fig-histogram-unemployment-rate-demographics).
 
+```{python}
+#| label: fig-histogram-unemployment-rate
+#| fig-cap: Overall Population Unemployment Rate Distributions (2015-2025 statistics)
+#| fig-alt: Histogram plot of the overall population unemployment rate distributins using 2015-2025 BLS data
+min_rate = df_overall_long['Unemployment_rate'].min()
+max_rate = df_overall_long['Unemployment_rate'].max()
+num_bins = 20
+bins = np.linspace(min_rate, max_rate, num_bins)
+fig, ax = plt.subplots(figsize = (8, 7))
+ax.hist(df_overall_long['Unemployment_rate'], bins=bins, alpha=0.7, color='skyblue', edgecolor='black')
+ax.axvline(np.mean(df_overall_long['Unemployment_rate']), color="black", linestyle="--")
+ax.set_xlabel("Unemployment Rate", fontsize=10)
+ax.set_ylabel("Count", fontsize=10)
+plt.tight_layout()
+plt.suptitle("Population Unemployment Rate", y =1.02, fontsize=18)
+plt.show()
+```
+According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (@fig-histogram-unemployment-rate).
 
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
+
+### Baseline unemployment rate distribution 
+Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. ($\sigma$, $\text{loc}$, and $\text{scale}$).
+```{python}
+#| label: fig-histogram-lognorm
+#| fig-cap: Unmployment Rate Histogram vs. Fitted Log-Norm PDF
+#| fig-alt: Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted log-norm distribution.
+
+# Fit log-norm distribution using population unemployment rate data
+from scipy.stats import lognorm, kstest, skew 
+
+## Get the unemployment_rate data that is not NA, convert to array
+data_to_fit = df_overall_long[~np.isnan(np.array(df_overall_long['Unemployment_rate']))]['Unemployment_rate']
+
+sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit) # Fit log-normal distribution
+
+# Print the estimated parameters
+print(f"\nFitted Log-Norm Distribution Parameters:")
+print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
+print(f"  Location parameter (loc): {loc_fit:.2f}")
+print(f"  Scale parameter (scale): {scale_fit:.2f}")
+
+# Visualize the fit
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 1, figsize=(10, 9))
+## Histogram of the unemployment data
+ax.hist(data_to_fit, bins=30, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='Data Histogram')
+## Fitted log-norm pdf
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+p = lognorm.pdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Log-Normal PDF')
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
+plt.show()
+```
+By overlaying the smooth PDF curve on top of original data's histogram, we can visualize that the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (@fig-histogram-lognorm).
+Now we need to use Kolmogorov-Smirnov Test to test Goodness-of-fit with the original data and estimated parameters, then examine the p value. 
+
+```{python}
+# KS goodness of fit test
+d_statistic, p_value = kstest(data_to_fit, lambda x: lognorm.cdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)) 
+print(f"\nKolmogorov-Smirnov Test Results:")
+print(f"  D-statistic: {d_statistic:.4f}")
+print(f"  P-value: {p_value:.4f}")
+
+```
+With $p$-value < 0.05, we can't reject the hypothesis that the distribution does not come from the Log-Normal distribution, suggesting Log-Normal is not a good fit for the data. Next, explore other right-skewed distributions - Gamma distribution or the Weibull distribution.
+
+```{python}
+#| label: fig-histogram-gamma
+#| fig-cap: Unmployment Rate Histogram vs. Fitted Gamma PDF
+#| fig-alt: Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Gamma distribution.
+
+# Fit gamma distribution using MLE
+from scipy.stats import gamma, skew, kstest
+alpha_fit, loc_fit, scale_fit = gamma.fit(data_to_fit) # fit gamma distribution
+
+# Print the estimated parameters
+print(f"\nFitted Gamma Distribution Parameters:")
+print(f"  Shape parameter 'alpha': {alpha_fit:.2f}")
+print(f"  Location parameter 'loc': {loc_fit:.2f}")
+print(f"  Scale parameter 'scale'): {scale_fit:.2f}")
+
+# Visualize the fit
+fig, ax = plt.subplots(1, 1, figsize = (10, 8))
+## Histogram of the unemployment data
+ax.hist(data_to_fit, bins = 20, density=True, color='skyblue', alpha= 0.7, edgecolor='black', label = 'Data Histogram')
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+
+## Plot fitted gamma pdf
+p = gamma.pdf(x, alpha_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Gamma PDF')
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Gamma Distribution PDF", y=1.02, fontsize=18)
+plt.show()
+
+```
+Although visually the Gamma distribution matches the shape and spread of the actual data. (@fig-histogram-gamma), we need to
+use KS Test to test Goodness-of-fit by examining the p value. 
+
+```{python}
+# Fit the gamma 
+d_statistic, p_value = kstest(data_to_fit, lambda x: gamma.cdf(x, alpha_fit, loc=loc_fit, scale=scale_fit))
+print(f"\nKolmogorov-Smirnov Test Results:")
+print(f"  D-statistic: {d_statistic:.4f}")
+print(f"  P-value: {p_value:.4f}")
+```
+Again, with $p$-value < 0.05, we can not confidently say that the data comes from the Gamma distribution. Next, explore Weibull distribution.
+
+```{python}
+#| label: fig-histogram-weibull
+#| fig-cap: Unmployment Rate Histogram vs. Fitted Weibull PDF
+#| fig-alt: Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Weibull distribution.
+
+# Fit Weibull distribution using MLE
+from scipy.stats import weibull_min, skew, kstest
+from scipy.special import gamma as gamma_func # For Weibull mean calculation
+c_fit, loc_fit, scale_fit = weibull_min.fit(data_to_fit) # fit weibull distribution
+
+# Print the estimated parameters
+# print(f"\nFitted Weibull Distribution Parameters:")
+# print(f"  Shape parameter 'c' (k): {c_fit:.4f}")
+# print(f"  Location parameter (loc): {loc_fit:.4f}")
+# print(f"  Scale parameter (scale, lambda): {scale_fit:.4f}")
+
+# Visualize the fit
+fig, ax = plt.subplots(1, 1, figsize = (10, 8))
+## Histogram of the unemployment data
+ax.hist(data_to_fit, bins = 20, density=True, color='skyblue', alpha= 0.7, edgecolor='black', label = 'Data Histogram')
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+
+## Plot fitted gamma pdf
+p = weibull_min.pdf(x, c_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Weibull PDF')
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Weibull Distribution PDF", y=1.02, fontsize=18)
+plt.show()
+
+```
+
+```{python}
+# Fit the Weibull
+d_statistic, p_value = kstest(data_to_fit, lambda x: weibull_min.cdf(x, c_fit, loc=loc_fit, scale=scale_fit))
+# Calculate inferred mean
+fitted_mean = loc_fit + scale_fit * gamma_func(1 + 1/c_fit)
+# print(f"\nKolmogorov-Smirnov Test Results:")
+# print(f"  D-statistic: {d_statistic:.4f}")
+# print(f"  P-value: {p_value:.4f}")
+```
+
+```{python}
+#| label: tbl-weibull-params
+#| tbl-cap: "Weibull Distribution and Fitness Statistics"
+#| tbl-col: true
+#| tbl-center: true
+
+# Print out the Weibull stats
+weibull_stats = {
+  "parameters": [
+    "Shape (c)",
+    "Location (loc)" ,
+    "Scale",
+    "D_statistics",
+    "P-value",
+    "Fitted Mean"
+  ],
+  "values": [
+     round(c_fit, 4),
+     round(loc_fit, 4),
+     round(scale_fit, 4),
+     round(d_statistic, 4),
+     round(p_value, 4),
+     round(fitted_mean, 2)
+  ]
+}
+weibull_stats_table = pd.DataFrame(weibull_stats)
+display(weibull_stats_table.style.hide(axis="index"))
+```
+
+The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.36 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
+
 ```{python}
 # Create variable "baseline" as baseline level of unemployment rate
 
 # Create variable - unemployment_vulnerability 
-unemployment_vulnerability = pm.math.invlogit(
-        baseline # baseline unemployment rate
-        + race_effect[race]
-        + age_effect[age]
-        + education_effect[education_attainment]
-        + industry_effect[industry]
-    )
+# unemployment_vulnerability = pm.math.invlogit(
+#         baseline # baseline unemployment rate
+#         + race_effect[race]
+#         + age_effect[age]
+#         + education_effect[education_attainment]
+#         + industry_effect[industry]
+#     )
 ```
 ```{python}
 import matplotlib.pyplot as plt
