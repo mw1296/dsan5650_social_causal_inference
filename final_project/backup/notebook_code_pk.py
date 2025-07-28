@@ -115,3 +115,21 @@ ax.legend()
 ax.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
+
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 1, figsize=(10, 9))
+## Histogram of the unemployment data
+ax.hist(data_to_fit_lognorm, bins=30, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='Data Histogram')
+## Fitted histogram
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+p = lognorm.pdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Log-Normal PDF')
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
+plt.show()

@@ -140,17 +140,19 @@ for i in range(0, len(df_dic.keys())-1):
 #| fig-cap: Unemployment Rate Distributions By Demographics (2015-2025 statistics)
 #| fig-alt: Histogram plots of the unemployment rate distributins by Age, Sex, Race, Industry and Education Attainment using 2015-2025 BLS data
 
-# Display this graph separately from the preious chuck in order to add the aritcle label
+## 2. Plot the overall umemployment rate 
+## Display this graph separately from the preious chuck in order to add the aritcle label
 df_plot = list(df_dic.values())[len(df_dic.keys())-1]
 demographic_type = list(df_dic.keys())[len(df_dic.keys())-1]
 print(f"Unemployment Rate Distribution Histograms By {demographic_type}")
 plot_hist(df_plot, demographic_type)
+
 ```
 BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil & Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (@fig-histogram-unemployment-rate-demographics).
 
 ```{python}
 #| label: fig-histogram-unemployment-rate
-#| fig-cap: Overall Unemployment Rate Distributions (2015-2025 statistics)
+#| fig-cap: Overall Population Unemployment Rate Distributions (2015-2025 statistics)
 #| fig-alt: Histogram plot of the overall population unemployment rate distributins using 2015-2025 BLS data
 min_rate = df_overall_long['Unemployment_rate'].min()
 max_rate = df_overall_long['Unemployment_rate'].max()
@@ -188,11 +190,12 @@ sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit_lognorm)
 
 ## Get mu (mean of log-data) from scale
 mu_fit = np.log(scale_fit)
-# print(f"\nFitted Log-Norm Distribution Parameters:")
-# print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
-# print(f"  Location parameter (loc): {loc_fit:.2f}")
-# print(f"  Scale parameter (scale): {scale_fit:.2f}")
-# print(f"  mu (mean of log-data): {mu_fit:.2f}")
+
+print(f"\nFitted Log-Norm Distribution Parameters:")
+print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
+print(f"  Location parameter (loc): {loc_fit:.2f}")
+print(f"  Scale parameter (scale): {scale_fit:.2f}")
+print(f"  mu (mean of log-data): {mu_fit:.2f}")
 
 # Visualize the fit
 import matplotlib.pyplot as plt
@@ -208,11 +211,24 @@ ax.set_xlabel('Unemployment Rate', fontsize=10)
 ax.set_ylabel('Density', fontsize=10)
 ax.legend()
 ax.grid(True, linestyle='--', alpha=0.7)
-plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
 plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
 plt.show()
 ```
-By overlaying the smooth PDF curve on top of your data's histogram, we can see the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (@fig-histogram-lognorm).
+By overlaying the smooth PDF curve on top of original data's histogram, we can visualize that the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (@fig-histogram-lognorm).
+Now we need to use Kolmogorov-Smirnov Test to test Goodness-of-fit with the original data and estimated parameters, then examine the p value. 
+
+```{python}
+# KS goodness of fit test
+d_statistic, p_value = kstest(data_to_fit_lognorm, lambda x: lognorm.cdf(x, sigma_fit, loc=loc_fit, scale=scale_fit))
+print(f"\nKolmogorov-Smirnov Test Results:")
+print(f"  D-statistic: {d_statistic:.4f}")
+print(f"  P-value: {p_value:.4f}")
+
+```
+With $p$-value < 0.05, we can't reject the hypothesis that the distribution does not come from the Log-Normal distribution, suggesting Log-Normal is not a good fit for the data. Next, explore other right-skewed distributions - Gamma distribution or the Weibull distribution.
+
+
 
 
 ```{python}
