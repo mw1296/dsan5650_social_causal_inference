@@ -74,4 +74,44 @@ for i in range(0, len(df_dic.keys())):
     plot_hist(df_plot, demographic_type)
 
 
+# Data pre-processing
+# 2. Load and process monthly unemployment overall file
+import pandas as pd
+import numpy as np
+df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
+df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="Unemployment_rate")
 
+# Fit the log-norma distribution# Fit log-norm distribution using population unemployment rate data
+from scipy.stats import lognorm, kstest, skew
+
+## Get the unemployment_rate data that is not NA, convert to array
+data_to_fit_lognorm = df_overall_long[~np.isnan(np.array(df_overall_long['Unemployment_rate']))]['Unemployment_rate']
+
+## Get the estimated parameters
+sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit_lognorm)
+
+## Get mu (mean of log-data) from scale
+mu_fit = np.log(scale_fit)
+print(f"\nFitted Log-Norm Distribution Parameters:")
+print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
+print(f"  Location parameter (loc): {loc_fit:.2f}")
+print(f"  Scale parameter (scale): {scale_fit:.2f}")
+print(f"  mu (mean of log-data): {mu_fit:.2f}")
+
+# Visualize the fit
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 1, figsize=(10, 9))
+## Histogram of the unemployment data
+ax.hist(data_to_fit_lognorm, bins=30, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='Data Histogram')
+## Fitted histogram
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+p = lognorm.pdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Log-Normal PDF')
+ax.set_xlabel('Unemployment Rate')
+ax.set_ylabel('Density')
+ax.set_title('Histogram with Fitted Log-Normal Distribution PDF')
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()

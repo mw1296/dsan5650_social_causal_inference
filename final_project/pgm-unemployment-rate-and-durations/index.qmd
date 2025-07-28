@@ -156,7 +156,7 @@ min_rate = df_overall_long['Unemployment_rate'].min()
 max_rate = df_overall_long['Unemployment_rate'].max()
 num_bins = 20
 bins = np.linspace(min_rate, max_rate, num_bins)
-fig, ax = plt.subplots(figsize = (8, 8))
+fig, ax = plt.subplots(figsize = (8, 7))
 ax.hist(df_overall_long['Unemployment_rate'], bins=bins, alpha=0.7, color='skyblue', edgecolor='black')
 ax.axvline(np.mean(df_overall_long['Unemployment_rate']), color="black", linestyle="--")
 ax.set_xlabel("Unemployment Rate", fontsize=10)
@@ -169,6 +169,46 @@ According to BLS data from 2015–2025, the overall population unemployment rate
 
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
+
+### Baseline unemployment rate distribution 
+Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. ($\sigma$, $\text{loc}$, and $\text{scale}$).
+```{python}
+# Fit log-norm distribution using population unemployment rate data
+from scipy.stats import lognorm, kstest, skew
+
+## Get the unemployment_rate data that is not NA, convert to array
+data_to_fit_lognorm = df_overall_long[~np.isnan(np.array(df_overall_long['Unemployment_rate']))]['Unemployment_rate']
+
+## Get the estimated parameters
+sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit_lognorm)
+
+## Get mu (mean of log-data) from scale
+mu_fit = np.log(scale_fit)
+print(f"\nFitted Log-Norm Distribution Parameters:")
+print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
+print(f"  Location parameter (loc): {loc_fit:.2f}")
+print(f"  Scale parameter (scale): {scale_fit:.2f}")
+print(f"  mu (mean of log-data): {mu_fit:.2f}")
+
+# Visualize the fit
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 1, figsize=(10, 9))
+## Histogram of the unemployment data
+ax.hist(data_to_fit_lognorm, bins=30, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='Data Histogram')
+## Fitted histogram
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+p = lognorm.pdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Log-Normal PDF')
+ax.set_xlabel('Unemployment Rate', font=10)
+ax.set_ylabel('Density', font=10)
+ax.set_title('Histogram with Fitted Log-Normal Distribution PDF', y=1.02, font=18)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+```
+
 ```{python}
 # Create variable "baseline" as baseline level of unemployment rate
 
