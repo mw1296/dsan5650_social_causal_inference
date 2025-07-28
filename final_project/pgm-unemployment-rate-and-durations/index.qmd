@@ -183,26 +183,22 @@ Figure 3 illustrates that the population unemployment rate is right-skewed, sugg
 from scipy.stats import lognorm, kstest, skew 
 
 ## Get the unemployment_rate data that is not NA, convert to array
-data_to_fit_lognorm = df_overall_long[~np.isnan(np.array(df_overall_long['Unemployment_rate']))]['Unemployment_rate']
+data_to_fit = df_overall_long[~np.isnan(np.array(df_overall_long['Unemployment_rate']))]['Unemployment_rate']
 
-## Get the estimated parameters
-sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit_lognorm)
+sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit) # Fit log-normal distribution
 
-## Get mu (mean of log-data) from scale
-mu_fit = np.log(scale_fit)
-
+# Print the estimated parameters
 print(f"\nFitted Log-Norm Distribution Parameters:")
 print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
 print(f"  Location parameter (loc): {loc_fit:.2f}")
 print(f"  Scale parameter (scale): {scale_fit:.2f}")
-print(f"  mu (mean of log-data): {mu_fit:.2f}")
 
 # Visualize the fit
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, 1, figsize=(10, 9))
 ## Histogram of the unemployment data
-ax.hist(data_to_fit_lognorm, bins=30, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='Data Histogram')
-## Fitted histogram
+ax.hist(data_to_fit, bins=30, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='Data Histogram')
+## Fitted log-norm pdf
 xmin, xmax = ax.get_xlim()
 x = np.linspace(xmin, xmax, 100)
 p = lognorm.pdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)
@@ -220,7 +216,7 @@ Now we need to use Kolmogorov-Smirnov Test to test Goodness-of-fit with the orig
 
 ```{python}
 # KS goodness of fit test
-d_statistic, p_value = kstest(data_to_fit_lognorm, lambda x: lognorm.cdf(x, sigma_fit, loc=loc_fit, scale=scale_fit))
+d_statistic, p_value = kstest(data_to_fit, lambda x: lognorm.cdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)) 
 print(f"\nKolmogorov-Smirnov Test Results:")
 print(f"  D-statistic: {d_statistic:.4f}")
 print(f"  P-value: {p_value:.4f}")
@@ -228,8 +224,128 @@ print(f"  P-value: {p_value:.4f}")
 ```
 With $p$-value < 0.05, we can't reject the hypothesis that the distribution does not come from the Log-Normal distribution, suggesting Log-Normal is not a good fit for the data. Next, explore other right-skewed distributions - Gamma distribution or the Weibull distribution.
 
+```{python}
+#| label: fig-histogram-gamma
+#| fig-cap: Unmployment Rate Histogram vs. Fitted Gamma PDF
+#| fig-alt: Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Gamma distribution.
 
+# Fit gamma distribution using MLE
+from scipy.stats import gamma, skew, kstest
+alpha_fit, loc_fit, scale_fit = gamma.fit(data_to_fit) # fit gamma distribution
 
+# Print the estimated parameters
+print(f"\nFitted Gamma Distribution Parameters:")
+print(f"  Shape parameter 'alpha': {alpha_fit:.2f}")
+print(f"  Location parameter 'loc': {loc_fit:.2f}")
+print(f"  Scale parameter 'scale'): {scale_fit:.2f}")
+
+# Visualize the fit
+fig, ax = plt.subplots(1, 1, figsize = (10, 8))
+## Histogram of the unemployment data
+ax.hist(data_to_fit, bins = 20, density=True, color='skyblue', alpha= 0.7, edgecolor='black', label = 'Data Histogram')
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+
+## Plot fitted gamma pdf
+p = gamma.pdf(x, alpha_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Gamma PDF')
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Gamma Distribution PDF", y=1.02, fontsize=18)
+plt.show()
+
+```
+Although visually the Gamma distribution matches the shape and spread of the actual data. (@fig-histogram-gamma), we need to
+use KS Test to test Goodness-of-fit by examining the p value. 
+
+```{python}
+# Fit the gamma 
+d_statistic, p_value = kstest(data_to_fit, lambda x: gamma.cdf(x, alpha_fit, loc=loc_fit, scale=scale_fit))
+print(f"\nKolmogorov-Smirnov Test Results:")
+print(f"  D-statistic: {d_statistic:.4f}")
+print(f"  P-value: {p_value:.4f}")
+```
+Again, with $p$-value < 0.05, we can not confidently say that the data comes from the Gamma distribution. Next, explore Weibull distribution.
+
+```{python}
+#| label: fig-histogram-weibull
+#| fig-cap: Unmployment Rate Histogram vs. Fitted Weibull PDF
+#| fig-alt: Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Weibull distribution.
+
+# Fit Weibull distribution using MLE
+from scipy.stats import weibull_min, skew, kstest
+from scipy.special import gamma as gamma_func # For Weibull mean calculation
+c_fit, loc_fit, scale_fit = weibull_min.fit(data_to_fit) # fit weibull distribution
+
+# Print the estimated parameters
+# print(f"\nFitted Weibull Distribution Parameters:")
+# print(f"  Shape parameter 'c' (k): {c_fit:.4f}")
+# print(f"  Location parameter (loc): {loc_fit:.4f}")
+# print(f"  Scale parameter (scale, lambda): {scale_fit:.4f}")
+
+# Visualize the fit
+fig, ax = plt.subplots(1, 1, figsize = (10, 8))
+## Histogram of the unemployment data
+ax.hist(data_to_fit, bins = 20, density=True, color='skyblue', alpha= 0.7, edgecolor='black', label = 'Data Histogram')
+xmin, xmax = ax.get_xlim()
+x = np.linspace(xmin, xmax, 100)
+
+## Plot fitted gamma pdf
+p = weibull_min.pdf(x, c_fit, loc=loc_fit, scale=scale_fit)
+ax.plot(x, p, 'darkred', lw=2, label='Fitted Weibull PDF')
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.suptitle("Data Histogram vs. Fitted Weibull Distribution PDF", y=1.02, fontsize=18)
+plt.show()
+
+```
+
+```{python}
+# Fit the Weibull
+d_statistic, p_value = kstest(data_to_fit, lambda x: weibull_min.cdf(x, c_fit, loc=loc_fit, scale=scale_fit))
+# Calculate inferred mean
+fitted_mean = loc_fit + scale_fit * gamma_func(1 + 1/c_fit)
+# print(f"\nKolmogorov-Smirnov Test Results:")
+# print(f"  D-statistic: {d_statistic:.4f}")
+# print(f"  P-value: {p_value:.4f}")
+```
+
+```{python}
+#| label: tbl-weibull-params
+#| tbl-cap: "Weibull Distribution and Fitness Statistics"
+#| tbl-col: true
+#| tbl-center: true
+
+# Print out the Weibull stats
+weibull_stats = {
+  "parameters": [
+    "Shape (c)",
+    "Location (loc)" ,
+    "Scale",
+    "D_statistics",
+    "P-value",
+    "Fitted Mean"
+  ],
+  "values": [
+     round(c_fit, 4),
+     round(loc_fit, 4),
+     round(scale_fit, 4),
+     round(d_statistic, 4),
+     round(p_value, 4),
+     round(fitted_mean, 2)
+  ]
+}
+weibull_stats_table = pd.DataFrame(weibull_stats)
+display(weibull_stats_table.style.hide(axis="index"))
+```
+
+The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.36 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
 
 ```{python}
 # Create variable "baseline" as baseline level of unemployment rate
