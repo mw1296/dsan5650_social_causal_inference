@@ -173,8 +173,12 @@ We posit that unemployment vulnerability is driven by structural inequalities wi
 ### Baseline unemployment rate distribution 
 Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. ($\sigma$, $\text{loc}$, and $\text{scale}$).
 ```{python}
+#| label: fig-histogram-lognorm
+#| fig-cap: Unmployment Rate Histogram vs. Fitted Log-Norm PDF
+#| fig-alt: Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted log-norm distribution.
+
 # Fit log-norm distribution using population unemployment rate data
-from scipy.stats import lognorm, kstest, skew
+from scipy.stats import lognorm, kstest, skew 
 
 ## Get the unemployment_rate data that is not NA, convert to array
 data_to_fit_lognorm = df_overall_long[~np.isnan(np.array(df_overall_long['Unemployment_rate']))]['Unemployment_rate']
@@ -184,11 +188,11 @@ sigma_fit, loc_fit, scale_fit = lognorm.fit(data_to_fit_lognorm)
 
 ## Get mu (mean of log-data) from scale
 mu_fit = np.log(scale_fit)
-print(f"\nFitted Log-Norm Distribution Parameters:")
-print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
-print(f"  Location parameter (loc): {loc_fit:.2f}")
-print(f"  Scale parameter (scale): {scale_fit:.2f}")
-print(f"  mu (mean of log-data): {mu_fit:.2f}")
+# print(f"\nFitted Log-Norm Distribution Parameters:")
+# print(f"  Shape parameter 'alpha'): {sigma_fit:.2f}")
+# print(f"  Location parameter (loc): {loc_fit:.2f}")
+# print(f"  Scale parameter (scale): {scale_fit:.2f}")
+# print(f"  mu (mean of log-data): {mu_fit:.2f}")
 
 # Visualize the fit
 import matplotlib.pyplot as plt
@@ -200,14 +204,16 @@ xmin, xmax = ax.get_xlim()
 x = np.linspace(xmin, xmax, 100)
 p = lognorm.pdf(x, sigma_fit, loc=loc_fit, scale=scale_fit)
 ax.plot(x, p, 'darkred', lw=2, label='Fitted Log-Normal PDF')
-ax.set_xlabel('Unemployment Rate', font=10)
-ax.set_ylabel('Density', font=10)
-ax.set_title('Histogram with Fitted Log-Normal Distribution PDF', y=1.02, font=18)
+ax.set_xlabel('Unemployment Rate', fontsize=10)
+ax.set_ylabel('Density', fontsize=10)
 ax.legend()
 ax.grid(True, linestyle='--', alpha=0.7)
+plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
 plt.tight_layout()
 plt.show()
 ```
+By overlaying the smooth PDF curve on top of your data's histogram, we can see the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (@fig-histogram-lognorm).
+
 
 ```{python}
 # Create variable "baseline" as baseline level of unemployment rate
