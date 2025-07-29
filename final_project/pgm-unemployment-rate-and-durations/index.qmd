@@ -324,7 +324,7 @@ fitted_mean = loc_fit + scale_fit * gamma_func(1 + 1/c_fit)
 
 # Print out the Weibull stats
 weibull_stats = {
-  "parameters": [
+  "Parameters": [
     "Shape (c)",
     "Location (loc)" ,
     "Scale",
@@ -332,7 +332,7 @@ weibull_stats = {
     "P-value",
     "Fitted Mean"
   ],
-  "values": [
+  "Values": [
      round(c_fit, 4),
      round(loc_fit, 4),
      round(scale_fit, 4),
@@ -345,7 +345,66 @@ weibull_stats_table = pd.DataFrame(weibull_stats)
 display(weibull_stats_table.style.hide(axis="index"))
 ```
 
-The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.36 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
+The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.35 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
+
+### Define the fixed Baseline
+```python
+weibull_fitted_mean_prob = 0.0435
+# Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
+fixed_baseline_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+```
+```{python}
+weibull_fitted_mean_prob = 0.0435
+# Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
+fixed_baseline_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+```
+
+### Define the PyMC model
+This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
+```python
+```
+
+```{python}
+# import pymc as pm
+
+# with pm.Model() as race_effect:
+#     # Prior for the race effect (beta_race)
+#     beta_race = pm.Normal('beta_race', mu=0, sigma=1)
+
+#     # Expected log-odds of unemployment for each observed individual: baselline_log_odds + race_effect
+#     expected_logit_unemployment = fixed_baseline_log_odds + beta_race * data['is_black_african'].values
+
+#     # Transform log-odds back to probability using the inverse logit function
+#     p_unemployment = pm.Deterministic('p_unemployment', pm.math.invlogit(expected_logit_unemployment))
+
+#     # Likelihood function for binary outcomes from Bernoulli distribution
+#     unemployment_status_observed = pm.Bernoulli(
+#         'unemployment_status_observed',
+#         p=p_unemployment, # Model's predicted probability of unemployment for each individual
+#         observed=data['unemployment_status'].values # Actual observed employment status outcome
+#     )
+```
+
+```python
+# import pymc as pm
+
+# with pm.Model() as race_effect:
+#     # Prior for the race effect (beta_race)
+#     beta_race = pm.Normal('beta_race', mu=0, sigma=1)
+
+#     # Expected log-odds of unemployment for each observed individual: baselline_log_odds + race_effect
+#     expected_logit_unemployment = fixed_baseline_log_odds + beta_race * data['is_black_african'].values
+
+#     # Transform log-odds back to probability using the inverse logit function
+#     p_unemployment = pm.Deterministic('p_unemployment', pm.math.invlogit(expected_logit_unemployment))
+
+#     # Likelihood function for binary outcomes from Bernoulli distribution
+#     unemployment_status_observed = pm.Bernoulli(
+#         'unemployment_status_observed',
+#         p=p_unemployment, # Model's predicted probability of unemployment for each individual
+#         observed=data['unemployment_status'].values # Actual observed employment status outcome
+#     )
+```
 
 ```{python}
 # Create variable "baseline" as baseline level of unemployment rate
