@@ -200,3 +200,110 @@ weibull_stats = {
 weibull_stats_table = pd.DataFrame(weibull_stats, index=False)
 display(weibull_stats_table.style.hide(axis='index'))
 
+
+# import pymc as pm
+
+# with pm.Model() as race_effect:
+#     # Prior for the race effect (beta_race)
+#     beta_race = pm.Normal('beta_race', mu=0, sigma=1)
+
+#     # Expected log-odds of unemployment for each observed individual: baselline_log_odds + race_effect
+#     expected_logit_unemployment = fixed_baseline_log_odds + beta_race * data['is_black_african'].values
+
+#     # Transform log-odds back to probability using the inverse logit function
+#     p_unemployment = pm.Deterministic('p_unemployment', pm.math.invlogit(expected_logit_unemployment))
+
+#     # Likelihood function for binary outcomes from Bernoulli distribution
+#     unemployment_status_observed = pm.Bernoulli(
+#         'unemployment_status_observed',
+#         p=p_unemployment, # Model's predicted probability of unemployment for each individual
+#         observed=data['unemployment_status'].values # Actual observed employment status outcome
+#     )
+
+# process the survey data
+df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
+df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
+                        "unmployment_duration","industry","occupation","industry_detailed",
+                        "occupation_detailed",'geo_code']
+## create mapping tables to convert the demographic codes to the descriptions
+sex_mapping = {
+        1: "male",
+        2: "female"
+}
+
+education_attainment_codes = list(np.arange(31,47))
+education_attainment_values = [
+        'less_than_high_school',
+		'less_than_high_school',
+		'less_than_high_school',
+        'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'high_school',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'bachelors_degree',
+'masters_degree',
+'professional_degree',
+'doctoral_degree'
+    ]    
+education_attainment_mapping=dict(zip(education_attainment_codes,education_attainment_values))
+
+race_codes = list(np.arange(1,27))
+race_values = [
+        "white",
+        "black",
+        "other",
+        "asian"
+    ] + ["other"] * 22
+race_mapping= dict(zip(race_codes, race_values))
+
+
+employment_status_codes =[
+        1,2,3,4,5,6,7
+    ]
+employment_status_names = [
+        "employed",
+        "employed",
+        "unemployed",
+        "unemployed",
+        "not in labor force",
+        "not in labor force",
+        "not in labor force"
+    ]
+employment_status_mapping = dict(zip(employment_status_codes,employment_status_names))
+
+industry_codes = list(np.arange(1,15))
+industry_names = [
+    "Agriculture, forestry, fishing, and hunting",
+    "Mining",
+    "Construction",
+    "Manufacturing",
+    "Wholesale and retail trade",
+    "Transportation and utilities",
+    "Information",
+    "Financial activities",
+    "Professional and business services",
+    "Educational and health services",
+    "Leisure and hospitality",
+    "Other services",
+    "Public administration",
+    "Armed Forces"
+    ]
+industry_mapping = dict(zip(industry_codes, industry_names))
+
+## Create new columns with decoded names
+df_survey_jun['sex_name'] = df_survey_jun['sex'].map(sex_mapping)
+df_survey_jun['race_name'] = df_survey_jun['race'].map(race_mapping)
+df_survey_jun['education_attainment_name'] = df_survey_jun['education_attainment'].map(education_attainment_mapping)
+df_survey_jun['employment_status_name'] = df_survey_jun['employment_status'].map(employment_status_mapping)
+df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
+
+## Filter out industry_name na rows
+df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
+
+## Show the table
+display(df_survey_jun.filter(like = "name", axis=1).head(10).style.hide(axis = "index"))

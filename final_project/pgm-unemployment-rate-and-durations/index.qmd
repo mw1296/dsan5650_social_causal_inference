@@ -42,8 +42,7 @@ warnings.filterwarnings('ignore')
 ```
 
 ```{python}
-# Data pre-processing
-# 1. Merge several unemployment statistics excel files downlaoded from BLS webiste
+# Data pre-processing - part1: Merge several unemployment statistics excel files downlaoded from BLS webiste
 import pandas as pd
 import os
 #os.getcwd()
@@ -87,13 +86,109 @@ for i in range(0, len(folder_path_list)):
 #list(df_dic.values())[0]
 ```
 ```{python}
-# Data pre-processing
-# 2. Load and process monthly unemployment overall file
+# Data pre-processing - part2: Load and process monthly unemployment overall file
 df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
 df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="Unemployment_rate")
-
-# 3. Load and process monthly unemployment duration by industry file
 ```
+
+```{python}
+#| label: tbl-survey-data
+#| tbl-cap: "BLS June 2025 Labor Force Survey Data"
+#| tbl-col: true
+#| tbl-center: true
+
+# Data pre-processing - part3: Load and process Jun 2025 BLS labor survey data
+# process the survey data
+import numpy as np
+df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
+df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
+                        "unmployment_duration","industry","occupation","industry_detailed",
+                        "occupation_detailed",'geo_code']
+## create mapping tables to convert the demographic codes to the descriptions
+sex_mapping = {
+        1: "male",
+        2: "female"
+}
+
+education_attainment_codes = list(np.arange(31,47))
+education_attainment_values = [
+        'less_than_high_school',
+		'less_than_high_school',
+		'less_than_high_school',
+        'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'high_school',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'bachelors_degree',
+'masters_degree',
+'professional_degree',
+'doctoral_degree'
+    ]    
+education_attainment_mapping=dict(zip(education_attainment_codes,education_attainment_values))
+
+race_codes = list(np.arange(1,27))
+race_values = [
+        "white",
+        "black",
+        "other",
+        "asian"
+    ] + ["other"] * 22
+race_mapping= dict(zip(race_codes, race_values))
+
+
+employment_status_codes =[
+        1,2,3,4,5,6,7
+    ]
+employment_status_names = [
+        "employed",
+        "employed",
+        "unemployed",
+        "unemployed",
+        "not in labor force",
+        "not in labor force",
+        "not in labor force"
+    ]
+employment_status_mapping = dict(zip(employment_status_codes,employment_status_names))
+
+industry_codes = list(np.arange(1,15))
+industry_names = [
+    "Agriculture, forestry, fishing, and hunting",
+    "Mining",
+    "Construction",
+    "Manufacturing",
+    "Wholesale and retail trade",
+    "Transportation and utilities",
+    "Information",
+    "Financial activities",
+    "Professional and business services",
+    "Educational and health services",
+    "Leisure and hospitality",
+    "Other services",
+    "Public administration",
+    "Armed Forces"
+    ]
+industry_mapping = dict(zip(industry_codes, industry_names))
+
+## Create new columns with decoded names
+df_survey_jun['sex_name'] = df_survey_jun['sex'].map(sex_mapping)
+df_survey_jun['race_name'] = df_survey_jun['race'].map(race_mapping)
+df_survey_jun['education_attainment_name'] = df_survey_jun['education_attainment'].map(education_attainment_mapping)
+df_survey_jun['employment_status_name'] = df_survey_jun['employment_status'].map(employment_status_mapping)
+df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
+
+## Filter out industry_name na rows
+df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
+
+## Display the table
+display(df_survey_jun.filter(like = "name", axis=1).head(10).style.hide(axis = "index"))
+```
+Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data). 
+
 
 ## EDA
 ### Unemployment Rates of Differenet Demographics
@@ -135,6 +230,7 @@ for i in range(0, len(df_dic.keys())-1):
     plot_hist(df_plot, demographic_type)
    
 ```
+
 ```{python}
 #| label: fig-histogram-unemployment-rate-demographics
 #| fig-cap: Unemployment Rate Distributions By Demographics (2015-2025 statistics)
