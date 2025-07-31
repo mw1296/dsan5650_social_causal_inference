@@ -184,8 +184,13 @@ df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
 ## Filter out industry_name na rows
 df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
 
+## Add columns "is_black" and "unemployment_status" for the binary model
+df_survey_jun['is_black'] = (df_survey_jun['race_name']=='black').astype(int)
+
+
 ## Display the table
-display(df_survey_jun.filter(like = "name", axis=1).head(10).style.hide(axis = "index"))
+display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african']].head(10).style.hide(axis='index'))
+
 ```
 Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data). 
 
@@ -445,75 +450,73 @@ The overlayed smooth PDF curve on top of original data's histogram @fig-histogra
 
 ### Define the fixed Baseline
 ```python
+### population unemployment mean probability from the fitted Weibull distribution
 weibull_fitted_mean_prob = 0.0435
 # Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
-fixed_baseline_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+# Find the mean unemployment probability and log-odds of black race
+black_mean_prob = df_dic['Race'].loc[df_dic['Race']['Race']=='black_and_african']['Unemployment_rate'].mean()
+black_mean_log_odds = np.log(black_mean_prob / (1 - black_mean_prob))
+# beta_race is the difference between the black mean log-odds and the population mean log-odds
+beta_race = black_mean_log_odds - population_mean_log_odds
 ```
+
 ```{python}
+# population unemployment mean probability from the fitted Weibull distribution
 weibull_fitted_mean_prob = 0.0435
 # Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
-fixed_baseline_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+# Find the mean unemployment probability and log-odds of black race
+black_mean_prob = df_dic['Race'].loc[df_dic['Race']['Race']=='black_and_african']['Unemployment_rate'].mean()
+black_mean_log_odds = np.log(black_mean_prob / (1 - black_mean_prob))
+# beta_race is the difference between the black mean log-odds and the population mean log-odds
+beta_race = black_mean_log_odds - population_mean_log_odds
 ```
 
 ### Define the PyMC model
 This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
 ```python
+with pm.Model() as unemployment_model_black_race:
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sd=0.5)
+    
+    # Additive race effect parameter on population mean
+    beta_race = pm.Normal('beta_race', mu=beta_race_effect, sd=0.3) # Can be positive or negative
+
+    # p_population: population unemployment probability that is determinedcd by population mean
+    p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
+
+    # mu_black_log_odds: black race unemployment log-odds based on population_mu + race effect
+    mu_black_log_odds = pm.Deterministic(
+        'mu_black_log_odds',
+        mu_population_log_odds + beta_race
+    )
+    
+    # p_black_mean: black unemployment probability
+    p_black_mean = pm.Deterministic('p_black_mean', pm.math.invlogit(mu_black_log_odds)) 
 ```
 
 ```{python}
-# import pymc as pm
+with pm.Model() as unemployment_model_black_race:
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sd=0.5)
+    
+    # Additive race effect parameter on population mean
+    beta_race = pm.Normal('beta_race', mu=beta_race_effect, sd=0.3) # Can be positive or negative
 
-# with pm.Model() as race_effect:
-#     # Prior for the race effect (beta_race)
-#     beta_race = pm.Normal('beta_race', mu=0, sigma=1)
+    # p_population: population unemployment probability that is determinedcd by population mean
+    p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
 
-#     # Expected log-odds of unemployment for each observed individual: baselline_log_odds + race_effect
-#     expected_logit_unemployment = fixed_baseline_log_odds + beta_race * data['is_black_african'].values
-
-#     # Transform log-odds back to probability using the inverse logit function
-#     p_unemployment = pm.Deterministic('p_unemployment', pm.math.invlogit(expected_logit_unemployment))
-
-#     # Likelihood function for binary outcomes from Bernoulli distribution
-#     unemployment_status_observed = pm.Bernoulli(
-#         'unemployment_status_observed',
-#         p=p_unemployment, # Model's predicted probability of unemployment for each individual
-#         observed=data['unemployment_status'].values # Actual observed employment status outcome
-#     )
+    # mu_black_log_odds: black race unemployment log-odds based on population_mu + race effect
+    mu_black_log_odds = pm.Deterministic(
+        'mu_black_log_odds',
+        mu_population_log_odds + beta_race
+    )
+    
+    # p_black_mean: black unemployment probability
+    p_black_mean = pm.Deterministic('p_black_mean', pm.math.invlogit(mu_black_log_odds)) 
 ```
 
-```python
-# import pymc as pm
-
-# with pm.Model() as race_effect:
-#     # Prior for the race effect (beta_race)
-#     beta_race = pm.Normal('beta_race', mu=0, sigma=1)
-
-#     # Expected log-odds of unemployment for each observed individual: baselline_log_odds + race_effect
-#     expected_logit_unemployment = fixed_baseline_log_odds + beta_race * data['is_black_african'].values
-
-#     # Transform log-odds back to probability using the inverse logit function
-#     p_unemployment = pm.Deterministic('p_unemployment', pm.math.invlogit(expected_logit_unemployment))
-
-#     # Likelihood function for binary outcomes from Bernoulli distribution
-#     unemployment_status_observed = pm.Bernoulli(
-#         'unemployment_status_observed',
-#         p=p_unemployment, # Model's predicted probability of unemployment for each individual
-#         observed=data['unemployment_status'].values # Actual observed employment status outcome
-#     )
-```
-
-```{python}
-# Create variable "baseline" as baseline level of unemployment rate
-
-# Create variable - unemployment_vulnerability 
-# unemployment_vulnerability = pm.math.invlogit(
-#         baseline # baseline unemployment rate
-#         + race_effect[race]
-#         + age_effect[age]
-#         + education_effect[education_attainment]
-#         + industry_effect[industry]
-#     )
-```
 ```{python}
 import matplotlib.pyplot as plt
 import numpy as np

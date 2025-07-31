@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 os.getcwd()
-
+os.chdir('pgm-unemployment-rate-and-durations')
 
 def create_df_race(folder_path, demographic_type, id_vars, var_name, value_name):
     merged_df = pd.DataFrame()
@@ -80,6 +80,94 @@ import pandas as pd
 import numpy as np
 df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
 df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="Unemployment_rate")
+
+
+# 3. process the survey data
+df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
+df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
+                        "unmployment_duration","industry","occupation","industry_detailed",
+                        "occupation_detailed",'geo_code']
+## create mapping tables to convert the demographic codes to the descriptions
+sex_mapping = {
+        1: "male",
+        2: "female"
+}
+
+education_attainment_codes = list(np.arange(31,47))
+education_attainment_values = [
+        'less_than_high_school',
+		'less_than_high_school',
+		'less_than_high_school',
+        'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'high_school',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'bachelors_degree',
+'masters_degree',
+'professional_degree',
+'doctoral_degree'
+    ]    
+education_attainment_mapping=dict(zip(education_attainment_codes,education_attainment_values))
+
+race_codes = list(np.arange(1,27))
+race_values = [
+        "white",
+        "black",
+        "other",
+        "asian"
+    ] + ["other"] * 22
+race_mapping= dict(zip(race_codes, race_values))
+
+employment_status_codes =[
+        1,2,3,4,5,6,7
+    ]
+employment_status_names = [
+        "employed",
+        "employed",
+        "unemployed",
+        "unemployed",
+        "not in labor force",
+        "not in labor force",
+        "not in labor force"
+    ]
+employment_status_mapping = dict(zip(employment_status_codes,employment_status_names))
+
+industry_codes = list(np.arange(1,15))
+industry_names = [
+    "Agriculture, forestry, fishing, and hunting",
+    "Mining",
+    "Construction",
+    "Manufacturing",
+    "Wholesale and retail trade",
+    "Transportation and utilities",
+    "Information",
+    "Financial activities",
+    "Professional and business services",
+    "Educational and health services",
+    "Leisure and hospitality",
+    "Other services",
+    "Public administration",
+    "Armed Forces"
+    ]
+industry_mapping = dict(zip(industry_codes, industry_names))
+## Create new columns with decoded names
+df_survey_jun['sex_name'] = df_survey_jun['sex'].map(sex_mapping)
+df_survey_jun['race_name'] = df_survey_jun['race'].map(race_mapping)
+df_survey_jun['education_attainment_name'] = df_survey_jun['education_attainment'].map(education_attainment_mapping)
+df_survey_jun['employment_status_name'] = df_survey_jun['employment_status'].map(employment_status_mapping)
+df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
+## Filter out industry_name na rows
+df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
+## Add column is_black_african for the binary model
+df_survey_jun['is_black_african'] = (df_survey_jun['race_name']=='black').astype(int)
+## Show the table with selective columns
+display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african']].head(10).style.hide(axis='index'))
+
 
 # Fit the log-norma distribution# Fit log-norm distribution using population unemployment rate data
 from scipy.stats import lognorm, kstest, skew
@@ -200,110 +288,35 @@ weibull_stats = {
 weibull_stats_table = pd.DataFrame(weibull_stats, index=False)
 display(weibull_stats_table.style.hide(axis='index'))
 
-
-# import pymc as pm
-
-# with pm.Model() as race_effect:
-#     # Prior for the race effect (beta_race)
-#     beta_race = pm.Normal('beta_race', mu=0, sigma=1)
-
-#     # Expected log-odds of unemployment for each observed individual: baselline_log_odds + race_effect
-#     expected_logit_unemployment = fixed_baseline_log_odds + beta_race * data['is_black_african'].values
-
-#     # Transform log-odds back to probability using the inverse logit function
-#     p_unemployment = pm.Deterministic('p_unemployment', pm.math.invlogit(expected_logit_unemployment))
-
-#     # Likelihood function for binary outcomes from Bernoulli distribution
-#     unemployment_status_observed = pm.Bernoulli(
-#         'unemployment_status_observed',
-#         p=p_unemployment, # Model's predicted probability of unemployment for each individual
-#         observed=data['unemployment_status'].values # Actual observed employment status outcome
-#     )
-
-# process the survey data
-df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
-df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
-                        "unmployment_duration","industry","occupation","industry_detailed",
-                        "occupation_detailed",'geo_code']
-## create mapping tables to convert the demographic codes to the descriptions
-sex_mapping = {
-        1: "male",
-        2: "female"
-}
-
-education_attainment_codes = list(np.arange(31,47))
-education_attainment_values = [
-        'less_than_high_school',
-		'less_than_high_school',
-		'less_than_high_school',
-        'less_than_high_school',
-'less_than_high_school',
-'less_than_high_school',
-'less_than_high_school',
-'less_than_high_school',
-'high_school',
-'some_college_or_associate_degree',
-'some_college_or_associate_degree',
-'some_college_or_associate_degree',
-'bachelors_degree',
-'masters_degree',
-'professional_degree',
-'doctoral_degree'
-    ]    
-education_attainment_mapping=dict(zip(education_attainment_codes,education_attainment_values))
-
-race_codes = list(np.arange(1,27))
-race_values = [
-        "white",
-        "black",
-        "other",
-        "asian"
-    ] + ["other"] * 22
-race_mapping= dict(zip(race_codes, race_values))
+### population unemployment mean probability from the fitted Weibull distribution
+weibull_fitted_mean_prob = 0.0435
+# Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
+population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+# Find the mean unemployment probability and log-odds of black race
+black_mean_prob = df_dic['Race'].loc[df_dic['Race']['Race']=='black_and_african']['Unemployment_rate'].mean()
+black_mean_log_odds = np.log(black_mean_prob / (1 - black_mean_prob))
+# beta_race is the difference between the black mean log-odds and the population mean log-odds
+beta_race_effect = black_mean_log_odds - population_mean_log_odds
 
 
-employment_status_codes =[
-        1,2,3,4,5,6,7
-    ]
-employment_status_names = [
-        "employed",
-        "employed",
-        "unemployed",
-        "unemployed",
-        "not in labor force",
-        "not in labor force",
-        "not in labor force"
-    ]
-employment_status_mapping = dict(zip(employment_status_codes,employment_status_names))
+# Build pymc model
+import pymc as pm
 
-industry_codes = list(np.arange(1,15))
-industry_names = [
-    "Agriculture, forestry, fishing, and hunting",
-    "Mining",
-    "Construction",
-    "Manufacturing",
-    "Wholesale and retail trade",
-    "Transportation and utilities",
-    "Information",
-    "Financial activities",
-    "Professional and business services",
-    "Educational and health services",
-    "Leisure and hospitality",
-    "Other services",
-    "Public administration",
-    "Armed Forces"
-    ]
-industry_mapping = dict(zip(industry_codes, industry_names))
+with pm.Model() as unemployment_model_black_race:
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sd=0.5)
+    
+    # Additive race effect parameter on population mean
+    beta_race = pm.Normal('beta_race', mu=beta_race_effect, sd=0.3) # Can be positive or negative
 
-## Create new columns with decoded names
-df_survey_jun['sex_name'] = df_survey_jun['sex'].map(sex_mapping)
-df_survey_jun['race_name'] = df_survey_jun['race'].map(race_mapping)
-df_survey_jun['education_attainment_name'] = df_survey_jun['education_attainment'].map(education_attainment_mapping)
-df_survey_jun['employment_status_name'] = df_survey_jun['employment_status'].map(employment_status_mapping)
-df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
+    # p_population: population unemployment probability that is determinedcd by population mean
+    p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
 
-## Filter out industry_name na rows
-df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
-
-## Show the table
-display(df_survey_jun.filter(like = "name", axis=1).head(10).style.hide(axis = "index"))
+    # mu_black_log_odds: black race unemployment log-odds based on population_mu + race effect
+    mu_black_log_odds = pm.Deterministic(
+        'mu_black_log_odds',
+        mu_population_log_odds + beta_race
+    )
+    
+    # p_black_mean: black unemployment probability
+    p_black_mean = pm.Deterministic('p_black_mean', pm.math.invlogit(mu_black_log_odds)) 
