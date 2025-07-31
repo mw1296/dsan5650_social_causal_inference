@@ -288,15 +288,44 @@ weibull_stats = {
 weibull_stats_table = pd.DataFrame(weibull_stats, index=False)
 display(weibull_stats_table.style.hide(axis='index'))
 
+
 ### population unemployment mean probability from the fitted Weibull distribution
 weibull_fitted_mean_prob = 0.0435
 # Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
 population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
-# Find the mean unemployment probability and log-odds of black race
-black_mean_prob = df_dic['Race'].loc[df_dic['Race']['Race']=='black_and_african']['Unemployment_rate'].mean()
-black_mean_log_odds = np.log(black_mean_prob / (1 - black_mean_prob))
-# beta_race is the difference between the black mean log-odds and the population mean log-odds
-beta_race_effect = black_mean_log_odds - population_mean_log_odds
+
+# Find the means of different demographics
+def mean_prob_demographic(df_name, demographic_type, demographic_description):
+    demographic_mean_prob = df_dic[df_name].loc[df_dic[df_name][demographic_type]==demographic_description]['Unemployment_rate'].mean()/100
+    demographic_mean_log_odds = np.log(demographic_mean_prob / (1 - demographic_mean_prob))
+    # beta_effect is the difference between the demographic group mean log-odds and the population mean log-odds
+    beta_effect = demographic_mean_log_odds - population_mean_log_odds
+    return beta_effect
+
+# Create a grid of demographic information to return the means
+demographic_grid = pd.DataFrame({
+    "df_name":[
+        'Race',
+        'Race',
+        'Race'
+    ],
+    "demographic_type":[
+        "Race", 
+        "Race",
+        "Race"
+    ],
+    "demographic_description":[
+        'black_and_african',
+        'white',
+        'asian'
+    ]
+})
+# Return the means
+demographic_grid['beta_effect']= None
+for row in range(0,len(demographic_grid)):
+    # Mean of demographic groups
+    beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
+    demographic_grid['beta_effect'][row] = beta_effect
 
 
 # Build pymc model
