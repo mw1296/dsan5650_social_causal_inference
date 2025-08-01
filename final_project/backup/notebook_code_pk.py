@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 os.getcwd()
-os.chdir('pgm-unemployment-rate-and-durations')
+os.chdir('../pgm-unemployment-rate-and-durations')
 
 def create_df_race(folder_path, demographic_type, id_vars, var_name, value_name):
     merged_df = pd.DataFrame()
@@ -236,7 +236,6 @@ print(f"\nKolmogorov-Smirnov Test Results:")
 print(f"  D-statistic: {d_statistic:.4f}")
 print(f"  P-value: {p_value:.4f}")
 
-
 # Fit Weibull distribution using MLE
 from scipy.stats import weibull_min, skew, kstest
 from scipy.special import gamma as gamma_func # For Weibull mean calculation
@@ -293,7 +292,7 @@ weibull_stats = {
      round(fitted_mean, 2)
   ]
 }
-weibull_stats_table = pd.DataFrame(weibull_stats, index=False)
+weibull_stats_table = pd.DataFrame(weibull_stats)
 display(weibull_stats_table.style.hide(axis='index'))
 
 
@@ -435,3 +434,21 @@ with unemployment_race_model:
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
 az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
 
+# Convert to DataFrame
+indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+# Extract only the first chain
+indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+# Melt as before
+indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+# And plot!
+import seaborn as sns
+import patchworklib as pw
+ax = pw.Brick(figsize=(4, 2.5));
+sns.kdeplot(
+    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    fill=True, bw_adjust=2,
+);
+ax.set_xlabel("Log-Odds Deviation from Overall Mean")
+ax.set_ylabel("Density")
+ax.set_title("Posterior Distribution of Race Effect Deviations")
+ax.savefig()

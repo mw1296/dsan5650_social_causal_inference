@@ -10,7 +10,7 @@ keywords:
   - Unemployment Durations
   - Causal Inference
 abstract: |
-  This study investigates the causal relationships between age, occupation, race, and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: time (2015, 2024 and 2025) and group attributes (age, race, and industry). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates by major across 2024 and 2025. A second dimension of analysis focuses on industry-specific unemployment rate dynamics from 2015 to 2025, particularly in [retail], [arts], and [technology] sectors, and how these intersect with racial and age groups. In addition to rate-based measures, the study explores how unemployment duration has evolved between 2015 and 2025 across different occupations and age cohorts. This analysis seeks to identify whether certain groups—such as []—face longer or shorter periods of unemployment today compared to a decade ago, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that recent college graduates in [] majors had a higher unemployment rate of [ ]% in 2025 H1 compared to [ ]% in 2024 H1. Additionally, the [retail], [arts], and [technology] industries experienced increased unemployment rates between 2015 and 2025, with respective changes of [ ], [ ], and [ ] percentage points. The findings also suggest that, consistent with earlier research, unemployment duration is negatively correlated with the unemployment rate by occupation, with industries exhibiting higher unemployment often associated with shorter average durations (Chien, Y., & Morris, P., 2016). The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among [e.g., Black or Hispanic workers] in the [e.g., retail or hospitality] sector. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
+  This study investigates the causal relationships between age, occupation, race, and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: group attributes (age, race, and industry) and time (2015 - 2024 and 2025). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates by major across 2024 and 2025. A second dimension of analysis focuses on industry-specific unemployment rate dynamics from 2015 to 2025, particularly in [retail], [arts], and [technology] sectors. In addition to rate-based measures, the study explores how unemployment duration has evolved between 2015 and 2025. This analysis seeks to identify whether certain groups—such as Black labor force and [Retail Industry]—face higher or lower unemployment, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that [conclusion1]. Additionally, the [retail], [arts], and [technology] industries experienced increased unemployment rates between 2015 and 2025, with respective changes of [ ], [ ], and [ ] percentage points. The findings also suggest that, consistent with earlier research, unemployment duration is negatively correlated with the unemployment rate by occupation, with industries exhibiting higher unemployment often associated with shorter average durations (Chien, Y., & Morris, P., 2016). The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among [e.g., Black or Hispanic workers] in the [e.g., retail or hospitality] sector. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
 plain-language-summary: |
   TBD
 key-points:
@@ -85,6 +85,7 @@ for i in range(0, len(folder_path_list)):
 
 #list(df_dic.values())[0]
 ```
+
 ```{python}
 # Data pre-processing - part2: Load and process monthly unemployment overall file
 df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
@@ -185,7 +186,7 @@ df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
 df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
 
 ## Add columns "is_black" and "unemployment_status" for the binary model
-df_survey_jun['is_black'] = (df_survey_jun['race_name']=='black').astype(int)
+df_survey_jun['is_black_african'] = (df_survey_jun['race_name']=='black').astype(int)
 
 ## Add column is_asian for the binary model
 df_survey_jun['is_asian'] = (df_survey_jun['race_name']=='asian').astype(int)
@@ -500,7 +501,7 @@ demographic_grid = pd.DataFrame({
     ]
 })
 # Return the means
-demographic_grid['beta_effect']= None
+demographic_grid['beta_effect']= np.float64(0)
 for row in range(0,len(demographic_grid)):
     # Mean of demographic groups
     beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
@@ -536,7 +537,7 @@ demographic_grid = pd.DataFrame({
     ]
 })
 # Return the beta_effect of different demographics
-demographic_grid['beta_effect']= None
+demographic_grid['beta_effect']= np.float64(0)
 for row in range(0,len(demographic_grid)):
     # Mean of demographic groups
     beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
@@ -731,10 +732,10 @@ with pm.Model() as unemployment_race_model:
 
 ### Graph the PGM
 ```python
-pm.model_to_graphviz(unemployment_model_race)
+pm.model_to_graphviz(unemployment_race_model)
 ```
 ```{python}
-pm.model_to_graphviz(unemployment_model_race)
+pm.model_to_graphviz(unemployment_race_model)
 ```
 
 ### Fit the Model - Perform MCMC Sampling
@@ -752,34 +753,58 @@ with unemployment_race_model:
 
 ### Analyze Results and Visualize
 ```python
+# Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
 az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
+
+# Convert to DataFrame
+indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+# Extract only the first chain
+indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+# Melt as before
+indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+
+# Plot
+import seaborn as sns
+import patchworklib as pw
+ax = pw.Brick(figsize=(4, 2.5));
+sns.kdeplot(
+    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    fill=True, bw_adjust=2,
+);
+ax.set_xlabel("Log-Odds Deviation from Overall Mean")
+ax.set_ylabel("Density")
+ax.set_title("Posterior Distribution of Race Effect Deviations")
+ax.savefig()
+
 ```
 
 ```{python}
+# Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
 az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
+
+# Convert to DataFrame
+indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+# Extract only the first chain
+indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+# Melt as before
+indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+
+# Plot
+import seaborn as sns
+import patchworklib as pw
+ax = pw.Brick(figsize=(4, 2.5));
+sns.kdeplot(
+    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    fill=True, bw_adjust=2,
+);
+ax.set_xlabel("Log-Odds Deviation from Overall Mean")
+ax.set_ylabel("Density")
+ax.set_title("Posterior Distribution of Race Effect Deviations")
+ax.savefig()
+
 ```
-$$
-p(x) = \frac{e^{-\lambda} \lambda^{x}}{x !}
-$$ {#eq-poisson}
-
-where $\lambda$ is the rate of eruptions per year. Using @eq-poisson, the probability of an eruption in the next $t$ years can be calculated.
-
-
-![Map of La Palma](images/la-palma-map.png){#fig-map}
-
-La Palma is one of the west most islands in the Volcanic Archipelago of the Canary Islands (@fig-map).
-
-{{< embed notebooks/data-screening.qmd#fig-spatial-plot >}}
-
-@fig-spatial-plot shows the location of recent Earthquakes on La Palma.
-
-Data and methods are discussed in @sec-data-methods.
-
-
-## Data & Methods {#sec-data-methods}
-
 
 ## References {.unnumbered}
 

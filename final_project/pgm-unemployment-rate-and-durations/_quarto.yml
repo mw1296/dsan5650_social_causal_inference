@@ -2,11 +2,16 @@ project:
   type: manuscript
 
 execute:
-  freeze: auto
+  freeze: false
+  echo: true
+  eval: true
+  output: true
 
 format:
   html:
     toc: true
+    number-sections: true 
+    toc-depth: 3
     comments:
       hypothesis: true
   docx: default
