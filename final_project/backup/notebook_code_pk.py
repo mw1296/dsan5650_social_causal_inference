@@ -75,7 +75,7 @@ for i in range(0, len(df_dic.keys())):
 
 
 # Data pre-processing
-# 2. Load and process monthly unemployment overall file
+# 2. Load and process monthly unemployment of all population
 import pandas as pd
 import numpy as np
 df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
@@ -165,8 +165,16 @@ df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
 df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
 ## Add column is_black_african for the binary model
 df_survey_jun['is_black_african'] = (df_survey_jun['race_name']=='black').astype(int)
+## Add column is_asian for the binary model
+df_survey_jun['is_asian'] = (df_survey_jun['race_name']=='asian').astype(int)
+## Add column is_asian for the binary model
+df_survey_jun['is_white'] = (df_survey_jun['race_name']=='white').astype(int)
+## Add column employment_status for the binary model
+df_survey_jun['unemployment_status'] = (df_survey_jun['employment_status_name']=='unemployed').astype(int)
+
+
 ## Show the table with selective columns
-display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african']].head(10).style.hide(axis='index'))
+display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
 
 
 # Fit the log-norma distribution# Fit log-norm distribution using population unemployment rate data
@@ -321,31 +329,109 @@ demographic_grid = pd.DataFrame({
     ]
 })
 # Return the means
-demographic_grid['beta_effect']= None
+demographic_grid['beta_effect']= np.float64(0)
 for row in range(0,len(demographic_grid)):
     # Mean of demographic groups
     beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
     demographic_grid['beta_effect'][row] = beta_effect
 
-
-# Build pymc model
+# Create the pymc model
 import pymc as pm
+import arviz as az
 
-with pm.Model() as unemployment_model_black_race:
+with pm.Model() as unemployment_race_model:
     # Prior of population mean log odds
-    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sd=0.5)
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
     
     # Additive race effect parameter on population mean
-    beta_race = pm.Normal('beta_race', mu=beta_race_effect, sd=0.3) # Can be positive or negative
+    beta_black = pm.Normal('beta_black', mu=demographic_grid[demographic_grid['demographic_description']=='black_and_african']['beta_effect'], sigma=0.3) # Can be positive or negative
 
-    # p_population: population unemployment probability that is determinedcd by population mean
+    beta_asian = pm.Normal('beta_asian', mu=demographic_grid[demographic_grid['demographic_description']=='asian']['beta_effect'], sigma=0.3) 
+
+    beta_white = pm.Normal('beta_white', mu=demographic_grid[demographic_grid['demographic_description']=='white']['beta_effect'], sigma=0.3) 
+    
+    # noise
+    sigma = pm.HalfNormal('sigma', sigma=0.2)
+
+    # log-odds and probabilities for each racial group
+    mu_white_log_odds = pm.Deterministic('mu_white_log_odds', mu_population_log_odds + beta_white)
+    mu_black_log_odds = pm.Deterministic('mu_black_log_odds', mu_population_log_odds + beta_black)
+    mu_asian_log_odds = pm.Deterministic('mu_asian_log_odds', mu_population_log_odds + beta_asian)
+
     p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
+    p_white = pm.Deterministic('p_white', pm.math.invlogit(mu_white_log_odds))
+    p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
+    p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
 
-    # mu_black_log_odds: black race unemployment log-odds based on population_mu + race effect
-    mu_black_log_odds = pm.Deterministic(
-        'mu_black_log_odds',
-        mu_population_log_odds + beta_race
+    # Likelihoods for observed data: use parameters like derived above to make predictions about the "true" probabilities of unemployment.
+
+    # predict population mean
+    population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
+    population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
+    population_rates_obs = pm.Normal(
+        'population_rates_obs',
+        mu=mu_population_log_odds, 
+        sigma=sigma,
+        observed=population_rates_df['rate_logit'].values
+    )
+
+    # predict black mean
+    black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
+    black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
+    black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
+    black_rates_obs = pm.Normal(
+        'black_rates_obs',
+        mu=mu_black_log_odds, 
+        sigma=sigma,
+        observed=black_rates_df['rate_logit'].values
+    )
+
+    # predict asian mean
+    asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
+    asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
+    asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
+    asian_rates_obs = pm.Normal(
+        'asian_rates_obs',
+        mu=mu_asian_log_odds,
+        sigma=sigma,
+        observed=asian_rates_df['rate_logit'].values
+    )
+
+    # predict white mean
+    white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
+    white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
+    white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
+    white_rates_obs = pm.Normal(
+        'white_rates_obs',
+        mu=mu_white_log_odds,
+        sigma=sigma,
+        observed=white_rates_df['rate_logit'].values
     )
     
-    # p_black_mean: black unemployment probability
-    p_black_mean = pm.Deterministic('p_black_mean', pm.math.invlogit(mu_black_log_odds)) 
+    # Assign the correct probability based on race
+    p_individual_for_obs = pm.math.switch(
+        df_survey_jun['is_black_african'].values,
+        p_black, # if is_black, use black prob
+        pm.math.switch(
+            df_survey_jun['is_asian'].values, 
+            p_asian, # if is_asian, use asian prob
+            p_white # else, use white prob
+        )
+    )
+    individual_status_obs = pm.Bernoulli(
+        'individual_status_obs',
+        p=p_individual_for_obs,
+        observed=df_survey_jun['unemployment_status'].values
+    )
+    
+pm.model_to_graphviz(unemployment_race_model)
+
+# Fit the Model (Perform MCMC Sampling)
+print("--- Starting MCMC sampling... ---")
+with unemployment_race_model:
+    indiv_trace = pm.sample(random_seed=5650)
+
+# Analyze Results and Visualize
+print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
+az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
+
