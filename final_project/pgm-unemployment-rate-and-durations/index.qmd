@@ -279,6 +279,9 @@ plt.show()
 ```
 According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (@fig-histogram-unemployment-rate).
 
+### Unemployment Rates of Differenet Industries
+(To be added)
+
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
 
@@ -545,7 +548,7 @@ for row in range(0,len(demographic_grid)):
 
 ```
 
-### Define the PyMC
+### Define the unemployment-race PyMC
 This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
 ```python
 
@@ -730,7 +733,7 @@ with pm.Model() as unemployment_race_model:
 
 ```
 
-### Graph the PGM
+### Graph the unemployment-race PGM
 ```python
 pm.model_to_graphviz(unemployment_race_model)
 ```
@@ -738,7 +741,7 @@ pm.model_to_graphviz(unemployment_race_model)
 pm.model_to_graphviz(unemployment_race_model)
 ```
 
-### Fit the Model - Perform MCMC Sampling
+### Fit the unemployment-race Model - Perform MCMC Sampling
 ```python
 print("Starting MCMC sampling...")
 with unemployment_race_model:
@@ -751,20 +754,25 @@ with unemployment_race_model:
     indiv_trace = pm.sample(random_seed=5650)
 ```
 
-### Analyze Results and Visualize
+### Analyze unemployment-race Results and Visualize
 ```python
 # Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
 az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
 
+# Trace plot
+fig_trace = az.plot_trace(indiv_trace)
+plt.suptitle('Trace plot', fontsize=16)
+plt.subplots_adjust(hspace=0.5) 
+
 # Convert to DataFrame
 indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
 # Extract only the first chain
 indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
-# Melt as before
+# Melt
 indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
 
-# Plot
+# Density Plot
 import seaborn as sns
 import patchworklib as pw
 ax = pw.Brick(figsize=(4, 2.5));
@@ -784,14 +792,19 @@ ax.savefig()
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
 az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
 
+# Trace plot
+fig_trace = az.plot_trace(indiv_trace)
+plt.suptitle('Trace plot', fontsize=16)
+plt.subplots_adjust(hspace=0.5) 
+
 # Convert to DataFrame
 indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
 # Extract only the first chain
 indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
-# Melt as before
+# Melt
 indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
 
-# Plot
+# Density plot
 import seaborn as sns
 import patchworklib as pw
 ax = pw.Brick(figsize=(4, 2.5));
@@ -805,6 +818,14 @@ ax.set_title("Posterior Distribution of Race Effect Deviations")
 ax.savefig()
 
 ```
+
+The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
+
+### PGM for unemployment-industry
+(To be added)
+
+### PGM for 
+
 
 ## References {.unnumbered}
 

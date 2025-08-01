@@ -373,7 +373,7 @@ Notebook}}
 
 \tabularnewline
 
-\caption{}\label{T_eff7a}\tabularnewline
+\caption{}\label{T_a6d29}\tabularnewline
 \toprule\noalign{}
 sex\_name & race\_name & education\_attainment\_name &
 employment\_status\_name & industry\_name & is\_black\_african &
@@ -522,6 +522,11 @@ According to BLS data from 2015--2025, the overall population
 unemployment rate averaged slightly above 4\%, with the majority of
 observations concentrated between 2\% and 5\% and exhibiting relatively
 low variability (Figure~\ref{fig-histogram-unemployment-rate}).
+
+\subsection{Unemployment Rates of Differenet
+Industries}\label{unemployment-rates-of-differenet-industries}
+
+(To be added)
 
 \section{PGM}\label{pgm}
 
@@ -685,7 +690,7 @@ Statistics}
 
 \tabularnewline
 
-\caption{}\label{T_b7626}\tabularnewline
+\caption{}\label{T_e3b78}\tabularnewline
 \toprule\noalign{}
 Parameters & Values \\
 \midrule\noalign{}
@@ -793,7 +798,8 @@ Notebook}}
 \href{https://mw1296.github.io/dsan5650_social_causal_inference/index.qmd.html}{Article
 Notebook}}
 
-\subsection{Define the PyMC}\label{define-the-pymc}
+\subsection{Define the unemployment-race
+PyMC}\label{define-the-unemployment-race-pymc}
 
 This section sets up the Bayesian model to estimate the additive race
 effect relative to the fixed baseline.
@@ -900,7 +906,8 @@ Notebook}}
 \href{https://mw1296.github.io/dsan5650_social_causal_inference/index.qmd.html}{Article
 Notebook}}
 
-\subsection{Graph the PGM}\label{graph-the-pgm}
+\subsection{Graph the unemployment-race
+PGM}\label{graph-the-unemployment-race-pgm}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -918,8 +925,8 @@ Notebook}}
 \href{https://mw1296.github.io/dsan5650_social_causal_inference/index.qmd.html}{Article
 Notebook}}
 
-\subsection{Fit the Model - Perform MCMC
-Sampling}\label{fit-the-model---perform-mcmc-sampling}
+\subsection{Fit the unemployment-race Model - Perform MCMC
+Sampling}\label{fit-the-unemployment-race-model---perform-mcmc-sampling}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -948,8 +955,8 @@ Output()
 \href{https://mw1296.github.io/dsan5650_social_causal_inference/index.qmd.html}{Article
 Notebook}}
 
-\subsection{Analyze Results and
-Visualize}\label{analyze-results-and-visualize}
+\subsection{Analyze unemployment-race Results and
+Visualize}\label{analyze-unemployment-race-results-and-visualize}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -957,14 +964,19 @@ Visualize}\label{analyze-results-and-visualize}
 \BuiltInTok{print}\NormalTok{(}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{{-}{-}{-} Model Summary (Simplified Model {-} Multiple Races) {-}{-}{-}"}\NormalTok{)}
 \NormalTok{az.summary(indiv\_trace, var\_names}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}mu\_population\_log\_odds\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_black\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_asian\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_white\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}sigma\textquotesingle{}}\NormalTok{])}
 
+\CommentTok{\# Trace plot}
+\NormalTok{fig\_trace }\OperatorTok{=}\NormalTok{ az.plot\_trace(indiv\_trace)}
+\NormalTok{plt.suptitle(}\StringTok{\textquotesingle{}Trace plot\textquotesingle{}}\NormalTok{, fontsize}\OperatorTok{=}\DecValTok{16}\NormalTok{)}
+\NormalTok{plt.subplots\_adjust(hspace}\OperatorTok{=}\FloatTok{0.5}\NormalTok{) }
+
 \CommentTok{\# Convert to DataFrame}
 \NormalTok{indiv\_post\_df }\OperatorTok{=}\NormalTok{ indiv\_trace.posterior.to\_dataframe().reset\_index()}
 \CommentTok{\# Extract only the first chain}
 \NormalTok{indiv\_post\_df }\OperatorTok{=}\NormalTok{ indiv\_post\_df[indiv\_post\_df[}\StringTok{\textquotesingle{}chain\textquotesingle{}}\NormalTok{] }\OperatorTok{==} \DecValTok{0}\NormalTok{]}
-\CommentTok{\# Melt as before}
+\CommentTok{\# Melt}
 \NormalTok{indiv\_post\_df }\OperatorTok{=}\NormalTok{ indiv\_post\_df[[}\StringTok{\textquotesingle{}draw\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}beta\_black\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_asian\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_white\textquotesingle{}}\NormalTok{]].melt(id\_vars}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}draw\textquotesingle{}}\NormalTok{])}
 
-\CommentTok{\# Plot}
+\CommentTok{\# Density Plot}
 \ImportTok{import}\NormalTok{ seaborn }\ImportTok{as}\NormalTok{ sns}
 \ImportTok{import}\NormalTok{ patchworklib }\ImportTok{as}\NormalTok{ pw}
 \NormalTok{ax }\OperatorTok{=}\NormalTok{ pw.Brick(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{4}\NormalTok{, }\FloatTok{2.5}\NormalTok{))}\OperatorTok{;}
@@ -990,9 +1002,23 @@ Notebook}}
 
 \pandocbounded{\includegraphics[keepaspectratio]{index_files/figure-pdf/cell-21-output-2.png}}
 
+\pandocbounded{\includegraphics[keepaspectratio]{index_files/figure-pdf/cell-21-output-3.png}}
+
 \textsubscript{Source:
 \href{https://mw1296.github.io/dsan5650_social_causal_inference/index.qmd.html}{Article
 Notebook}}
+
+The posterior distributions of racial group mean log-odds for
+unemployment reveal clear deviations, with the Black population
+exhibiting a higher rate compared to both the White and Asian
+populations.
+
+\subsection{PGM for
+unemployment-industry}\label{pgm-for-unemployment-industry}
+
+(To be added)
+
+\subsection{PGM for}\label{pgm-for}
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
