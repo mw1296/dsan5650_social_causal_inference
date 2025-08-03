@@ -875,12 +875,13 @@ ax.savefig()
 The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
 
 ### PGM for unemployment-industry
-```{python}
-## 1. Exclude some industries and persons "not in labor force"
+```python
+## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
 survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
                               'Mining',
                               'Other services',
-                              'Agriculture, forestry, fishing, and hunting'])]
+                              'Agriculture, forestry, fishing, and hunting',
+                              'Armed Forces'])]
 survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
 ## Factorize the industry_name column to get numerical indices and names
 industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
@@ -893,12 +894,74 @@ df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['constructio
                               'mining_quarrying_and_oil_and_gas_ extraction',
                               'other_services',
                               'agricultural',
-                              'self_employed'])]
+                              'self_employed',
+                              'Non Durable Goods Industry',
+                              'durable_goods'])]
 
 ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
     mean_ur = ('Unemployment_rate','mean'),
     sd_ur = ('Unemployment_rate', 'std')
 ))
+ # modify the industry name column to align with industry_names
+ur_by_industry['Industry']=['Educational and health services',
+                            'Financial activities',
+                            'Public administration',
+                            'Information',
+                            'Leisure and hospitality',
+                            'Manufacturing',
+                            'Professional and business services',
+                            'Transportation and utilities',
+                            'Wholesale and retail trade']
+# Logit transformation function
+def logit(p):
+    return np.log(p / (1 - p))
+ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
+ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
+```
+
+```{python}
+## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
+survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
+                              'Mining',
+                              'Other services',
+                              'Agriculture, forestry, fishing, and hunting',
+                              'Armed Forces'])]
+survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
+## Factorize the industry_name column to get numerical indices and names
+industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
+survey_df_industry['industry_idx'] = industry_idx
+## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
+survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
+df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
+                              'mining_quarrying_and_oil_and_gas_ extraction',
+                              'other_services',
+                              'agricultural',
+                              'self_employed',
+                              'Non Durable Goods Industry',
+                              'durable_goods'])]
+
+ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
+    mean_ur = ('Unemployment_rate','mean'),
+    sd_ur = ('Unemployment_rate', 'std')
+))
+ # modify the industry name column to align with industry_names
+ur_by_industry['Industry']=['Educational and health services',
+                            'Financial activities',
+                            'Public administration',
+                            'Information',
+                            'Leisure and hospitality',
+                            'Manufacturing',
+                            'Professional and business services',
+                            'Transportation and utilities',
+                            'Wholesale and retail trade']
+# Logit transformation function
+def logit(p):
+    return np.log(p / (1 - p))
+ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
+ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
+
 ```
 
 ### PGM for recent graduates unemployment time effect

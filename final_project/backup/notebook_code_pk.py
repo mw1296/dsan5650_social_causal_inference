@@ -487,11 +487,12 @@ ax.savefig()
 
 
 # PGM for unemployment-industry
-## 1. Exclude some industries and persons "not in labor force"
+## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
 survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
                               'Mining',
                               'Other services',
-                              'Agriculture, forestry, fishing, and hunting'])]
+                              'Agriculture, forestry, fishing, and hunting',
+                              'Armed Forces'])]
 survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
 ## Factorize the industry_name column to get numerical indices and names
 industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
@@ -504,12 +505,47 @@ df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['constructio
                               'mining_quarrying_and_oil_and_gas_ extraction',
                               'other_services',
                               'agricultural',
-                              'self_employed'])]
+                              'self_employed',
+                              'Non Durable Goods Industry',
+                              'durable_goods'])]
 
 ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
     mean_ur = ('Unemployment_rate','mean'),
     sd_ur = ('Unemployment_rate', 'std')
 ))
+ # modify the industry name column to align with industry_names
+ur_by_industry['Industry']=['Educational and health services',
+                            'Financial activities',
+                            'Public administration',
+                            'Information',
+                            'Leisure and hospitality',
+                            'Manufacturing',
+                            'Professional and business services',
+                            'Transportation and utilities',
+                            'Wholesale and retail trade']
+# Logit transformation function
+def logit(p):
+    return np.log(p / (1 - p))
+ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
+ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
 
-
-## Define the Adaptive pooling PyMC model
+## 3. Define the Adaptive pooling PyMC model
+coords = {"industry": industry_names}
+# priors
+prior_mu_alpha_vals = np.array([ur_by_industry['Industry'] for ur_by_industry['Industry'] in industry_names])
+prior_sigma_alpha_vals = np.array([industry_ur_prior_sds_alpha[name] for name in industry_names])
+with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+    # Global Priors
+    mu_alpha_global = pm.Normal("mu_alpha_global", 
+                                mu=np.mean(ur_by_industry['mean_ur_logit']), 
+                                sigma=1) 
+    sigma_alpha_global = pm.Exponential("sigma_alpha_global", 1) 
+    
+    # Industry-Specific Parameters
+    pm_prior_mu_alpha = pm.Data("prior_mu_alpha", prior_mu_alpha_vals, dims="industry")
+    
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=pm_prior_mu_alpha, # Mean of this Normal is the informative prior
+                                sigma=sigma_alpha_global, # This sigma controls the pooling strength
+                                dims="industry")
