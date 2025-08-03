@@ -432,8 +432,7 @@ with unemployment_race_model:
 
 # Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
-az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
-
+display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
 fig_trace = az.plot_trace(indiv_trace)
 plt.suptitle('Trace plot', fontsize=16)
 plt.subplots_adjust(hspace=0.5) 

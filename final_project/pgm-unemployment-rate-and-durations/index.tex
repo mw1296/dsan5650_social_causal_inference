@@ -373,7 +373,7 @@ Notebook}}
 
 \tabularnewline
 
-\caption{}\label{T_a6d29}\tabularnewline
+\caption{}\label{T_76b1a}\tabularnewline
 \toprule\noalign{}
 sex\_name & race\_name & education\_attainment\_name &
 employment\_status\_name & industry\_name & is\_black\_african &
@@ -690,7 +690,7 @@ Statistics}
 
 \tabularnewline
 
-\caption{}\label{T_e3b78}\tabularnewline
+\caption{}\label{T_63ab7}\tabularnewline
 \toprule\noalign{}
 Parameters & Values \\
 \midrule\noalign{}
@@ -962,8 +962,7 @@ Visualize}\label{analyze-unemployment-race-results-and-visualize}
 \begin{Highlighting}[]
 \CommentTok{\# Analyze Results and Visualize}
 \BuiltInTok{print}\NormalTok{(}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{{-}{-}{-} Model Summary (Simplified Model {-} Multiple Races) {-}{-}{-}"}\NormalTok{)}
-\NormalTok{az.summary(indiv\_trace, var\_names}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}mu\_population\_log\_odds\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_black\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_asian\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_white\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}sigma\textquotesingle{}}\NormalTok{])}
-
+\NormalTok{display(pd.DataFrame(az.summary(indiv\_trace, var\_names}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}mu\_population\_log\_odds\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_black\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_asian\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}beta\_white\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}sigma\textquotesingle{}}\NormalTok{])))}
 \CommentTok{\# Trace plot}
 \NormalTok{fig\_trace }\OperatorTok{=}\NormalTok{ az.plot\_trace(indiv\_trace)}
 \NormalTok{plt.suptitle(}\StringTok{\textquotesingle{}Trace plot\textquotesingle{}}\NormalTok{, fontsize}\OperatorTok{=}\DecValTok{16}\NormalTok{)}
@@ -987,7 +986,6 @@ Visualize}\label{analyze-unemployment-race-results-and-visualize}
 \NormalTok{ax.set\_xlabel(}\StringTok{"Log{-}Odds Deviation from Overall Mean"}\NormalTok{)}
 \NormalTok{ax.set\_ylabel(}\StringTok{"Density"}\NormalTok{)}
 \NormalTok{ax.set\_title(}\StringTok{"Posterior Distribution of Race Effect Deviations"}\NormalTok{)}
-\NormalTok{ax.savefig()}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1000,9 +998,29 @@ Notebook}}
 --- Model Summary (Simplified Model - Multiple Races) ---
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{index_files/figure-pdf/cell-21-output-2.png}}
+\begin{longtable}[]{@{}llllllllll@{}}
+\toprule\noalign{}
+& mean & sd & hdi\_3\% & hdi\_97\% & mcse\_mean & mcse\_sd & ess\_bulk &
+ess\_tail & r\_hat \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+mu\_population\_log\_odds & -3.146 & 0.028 & -3.199 & -3.093 & 0.001 &
+0.000 & 1539.0 & 1941.0 & 1.0 \\
+beta\_black{[}0{]} & 0.565 & 0.038 & 0.497 & 0.640 & 0.001 & 0.001 &
+1845.0 & 2677.0 & 1.0 \\
+beta\_asian{[}0{]} & -0.149 & 0.039 & -0.218 & -0.075 & 0.001 & 0.001 &
+1859.0 & 2245.0 & 1.0 \\
+beta\_white{[}0{]} & -0.128 & 0.034 & -0.191 & -0.065 & 0.001 & 0.000 &
+1772.0 & 2332.0 & 1.0 \\
+sigma & 0.320 & 0.010 & 0.301 & 0.340 & 0.000 & 0.000 & 3604.0 & 2570.0
+& 1.0 \\
+\end{longtable}
 
 \pandocbounded{\includegraphics[keepaspectratio]{index_files/figure-pdf/cell-21-output-3.png}}
+
+\pandocbounded{\includegraphics[keepaspectratio]{index_files/figure-pdf/cell-21-output-4.png}}
 
 \textsubscript{Source:
 \href{https://mw1296.github.io/dsan5650_social_causal_inference/index.qmd.html}{Article
@@ -1018,7 +1036,10 @@ unemployment-industry}\label{pgm-for-unemployment-industry}
 
 (To be added)
 
-\subsection{PGM for}\label{pgm-for}
+\subsection{PGM for recent graduates unemployment time
+effect}\label{pgm-for-recent-graduates-unemployment-time-effect}
+
+(stretch goal)
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}

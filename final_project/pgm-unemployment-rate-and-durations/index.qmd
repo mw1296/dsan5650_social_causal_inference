@@ -10,7 +10,7 @@ keywords:
   - Unemployment Durations
   - Causal Inference
 abstract: |
-  This study investigates the causal relationships between age, occupation, race, and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: group attributes (age, race, and industry) and time (2015 - 2024 and 2025). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates by major across 2024 and 2025. A second dimension of analysis focuses on industry-specific unemployment rate dynamics from 2015 to 2025, particularly in [retail], [arts], and [technology] sectors. In addition to rate-based measures, the study explores how unemployment duration has evolved between 2015 and 2025. This analysis seeks to identify whether certain groups—such as Black labor force and [Retail Industry]—face higher or lower unemployment, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that [conclusion1]. Additionally, the [retail], [arts], and [technology] industries experienced increased unemployment rates between 2015 and 2025, with respective changes of [ ], [ ], and [ ] percentage points. The findings also suggest that, consistent with earlier research, unemployment duration is negatively correlated with the unemployment rate by occupation, with industries exhibiting higher unemployment often associated with shorter average durations (Chien, Y., & Morris, P., 2016). The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among [e.g., Black or Hispanic workers] in the [e.g., retail or hospitality] sector. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
+  In its revised report released on July 31, 2025, the U.S. Bureau of Labor Statistics (BLS) reported a sharp slowdown in job creation beginning in May, signaling heightened uncertainty and growing concerns about the overall health of the U.S. labor market. This study investigates the causal relationships between race, industry and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: group attributes (race and industry) and time (2024 vs. 2025). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates across 2024 and 2025. This study first examined the race effect on the unemployment rate disparitu. The industry-specific unemployment rate dynamics focuses on [retail] [] and [Leisure and hospitality] sectors. This analysis seeks to identify whether certain groups—such as Black labor force and [Retail Industry]—face higher or lower unemployment, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that [conclusion1]. Additionally, the [retail], [], and [technology] industries experienced increased unemployment rates between the year of 2015 and the year of 2025, with respective changes of [ ], [ ], and [ ] percentage points. The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among Black workers and the [retail and hospitality] sectors. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
 plain-language-summary: |
   TBD
 key-points:
@@ -34,15 +34,16 @@ Research from the U.S. Bureau of Labor Statistics consistently shows longer unem
 
 ![Unemployment Rate of Recent College Graduates](images/unemployment_rate_recent_graduate.png){#fig-graduates}
 
-Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025, recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, reaching 2021 levels and particularly affecting recent college graduates (@fig-graduates). 
+Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025 (Based on the U.S. Bureau of Labor Statistics (BLS) revised job creation data released on July 31, 2025, a marked decline in job creation has been observed beginning in May, raising substantial concerns regarding the stability of the U.S. labor market.), recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, reaching 2021 levels and particularly affecting recent college graduates (@fig-graduates). 
 
+## Data
 ```{python}
 import warnings
 warnings.filterwarnings('ignore')
 ```
 
 ```{python}
-# Data pre-processing - part1: Merge several unemployment statistics excel files downlaoded from BLS webiste
+# Data pre-processing - part1: Merge monthly unemployment rates by different demographics excel files downlaoded from BLS website
 import pandas as pd
 import os
 #os.getcwd()
@@ -205,7 +206,7 @@ Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey
 
 
 ## EDA
-### Unemployment Rates of Differenet Demographics
+### Unemployment Rates of Differenet Races
 ```{python}
 # Plot the distributions of unemployment stats of different demographic categories 
 
@@ -475,7 +476,7 @@ weibull_fitted_mean_prob = 0.0435
 population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
 ```
 
-### Define the prior means by demographic types
+### Define the prior means by races
 ```python
 # Function to find the means of different demographics
 def mean_prob_demographic(df_name, demographic_type, demographic_description):
@@ -758,8 +759,7 @@ with unemployment_race_model:
 ```python
 # Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
-az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
-
+display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
 # Trace plot
 fig_trace = az.plot_trace(indiv_trace)
 plt.suptitle('Trace plot', fontsize=16)
@@ -783,14 +783,13 @@ sns.kdeplot(
 ax.set_xlabel("Log-Odds Deviation from Overall Mean")
 ax.set_ylabel("Density")
 ax.set_title("Posterior Distribution of Race Effect Deviations")
-ax.savefig()
 
 ```
 
 ```{python}
 # Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
-az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])
+display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
 
 # Trace plot
 fig_trace = az.plot_trace(indiv_trace)
@@ -824,8 +823,8 @@ The posterior distributions of racial group mean log-odds for unemployment revea
 ### PGM for unemployment-industry
 (To be added)
 
-### PGM for 
-
+### PGM for recent graduates unemployment time effect
+(stretch goal)
 
 ## References {.unnumbered}
 
