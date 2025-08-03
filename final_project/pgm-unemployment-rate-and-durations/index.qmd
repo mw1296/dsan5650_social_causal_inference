@@ -43,6 +43,11 @@ warnings.filterwarnings('ignore')
 ```
 
 ```{python}
+#| label: tbl-monthly-unemployment-rate-race
+#| tbl-cap: "BLS 2015-2025 Monthly Unemployment Rate By Race"
+#| tbl-col: true
+#| tbl-center: true
+
 # Data pre-processing - part1: Merge monthly unemployment rates by different demographics excel files downlaoded from BLS website
 import pandas as pd
 import os
@@ -84,8 +89,11 @@ for i in range(0, len(folder_path_list)):
     merged_df = create_df_race(folder_path, demographic_type, "Year", "Month", "Unemployment_rate")
     df_dic[demographic_type] = merged_df
 
+display(df_dic['Race'].head(10).style.hide(axis='index').format({'Unemployment_rate':'{:.2f}'}))
+
 #list(df_dic.values())[0]
 ```
+Data from the U.S. Bureau of Labor Statistics (BLS) 2015 to 2025 monthly aggregated unemployment rate by races. This dataset is used to analyze the race effect on unemployment along with the monthly unemployment rate aggregated data by race (@tbl-monthly-unemployment-rate-race).
 
 ```{python}
 # Data pre-processing - part2: Load and process monthly unemployment overall file
@@ -94,7 +102,7 @@ df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="
 ```
 
 ```{python}
-#| label: tbl-survey-data
+#| label: tbl-survey-data-jun2025
 #| tbl-cap: "BLS June 2025 Labor Force Survey Data"
 #| tbl-col: true
 #| tbl-center: true
@@ -105,7 +113,7 @@ import numpy as np
 df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
 df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
                         "unmployment_duration","industry","occupation","industry_detailed",
-                        "occupation_detailed",'geo_code']
+                        "occupation_detailed"]
 ## create mapping tables to convert the demographic codes to the descriptions
 sex_mapping = {
         1: "male",
@@ -202,8 +210,35 @@ df_survey_jun['unemployment_status'] = (df_survey_jun['employment_status_name']=
 display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
 
 ```
-Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data). 
+Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data-jun2025). This dataset is used to sample and predict employment status using the observations in the survey data.
 
+```{python}
+#| label: tbl-survey-data-2024-2025
+#| tbl-cap: "BLS 2024 - 2025 Jan - Jul Labor Force Survey Data"
+#| tbl-col: true
+#| tbl-center: true
+
+## Data pre-processing part3: Process monthly survey data of 2024 Jan-Jul and 2025 Jan-Jul
+survey_file_names = [f.removesuffix(".csv") for f in os.listdir('../data/survey_data') if f.endswith("csv")]
+cols = ['prmjind1', 'pemlr'] # keep columns industry and employment_status
+survey_df = []
+for s in survey_file_names:
+    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s + ".csv" ))
+    survey_data = survey_file[cols]
+    survey_data.columns=['industry','employment_status']
+    survey_data['month_year'] = s
+    survey_df.append(survey_data)
+# Combine all into a single DataFrame
+survey_df = pd.concat(survey_df, ignore_index=True)
+survey_df['month_year'].unique()
+# decode the industry and employment_status columns
+survey_df['industry_name'] = survey_df['industry'].map(industry_mapping)
+survey_df = survey_df[~survey_df['industry_name'].isna()]
+survey_df['employment_status_description'] = survey_data['employment_status'].map(employment_status_mapping)
+display(survey_df.head(10).style.hide(axis='index'))
+```
+
+Data from the U.S. Bureau of Labor Statistics (BLS) historical monthly labor force survey provide individual-level employment status by industries. For the purpose of this study, we utilized 2024 Jan to Jul and 2025 Jan to Jun data. (@tbl-survey-data-2024-2025). This dataset is used to analyze the industry effect on unemployment rate in the recent 2 years.
 
 ## EDA
 ### Unemployment Rates of Differenet Races

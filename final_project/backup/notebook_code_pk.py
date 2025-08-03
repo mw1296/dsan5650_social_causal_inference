@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 os.getcwd()
-os.chdir('../pgm-unemployment-rate-and-durations')
+#os.chdir('../pgm-unemployment-rate-and-durations')
 
 def create_df_race(folder_path, demographic_type, id_vars, var_name, value_name):
     merged_df = pd.DataFrame()
@@ -38,7 +38,7 @@ for i in range(0, len(folder_path_list)):
     demographic_type=demographic_type_list[i]
     merged_df = create_df_race(folder_path, demographic_type, "Year", "Month", "Unemployment_rate")
     df_dic[demographic_type] = merged_df
-
+display(df_dic['Race'].head(10).style.hide(axis='index').format({'Unemployment_rate':'{:.2f}'}))
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,7 +86,7 @@ df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="
 df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
 df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
                         "unmployment_duration","industry","occupation","industry_detailed",
-                        "occupation_detailed",'geo_code']
+                        "occupation_detailed"]
 ## create mapping tables to convert the demographic codes to the descriptions
 sex_mapping = {
         1: "male",
@@ -172,9 +172,27 @@ df_survey_jun['is_white'] = (df_survey_jun['race_name']=='white').astype(int)
 ## Add column employment_status for the binary model
 df_survey_jun['unemployment_status'] = (df_survey_jun['employment_status_name']=='unemployed').astype(int)
 
-
 ## Show the table with selective columns
 display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
+
+## Process monthly survey data of 2024 Jan-Jul and 2025 Jan-Jul
+survey_file_names = [f.removesuffix(".csv") for f in os.listdir('../data/survey_data') if f.endswith("csv")]
+cols = ['prmjind1', 'pemlr'] # keep columns industry and employment_status
+survey_df = []
+for s in survey_file_names:
+    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s + ".csv" ))
+    survey_data = survey_file[cols]
+    survey_data.columns=['industry','employment_status']
+    survey_data['month_year'] = s
+    survey_df.append(survey_data)
+# Combine all into a single DataFrame
+survey_df = pd.concat(survey_df, ignore_index=True)
+survey_df['month_year'].unique()
+# decode the industry and employment_status columns
+survey_df['industry_name'] = survey_df['industry'].map(industry_mapping)
+survey_df = survey_df[~survey_df['industry_name'].isna()]
+survey_df['employment_status_description'] = survey_data['employment_status'].map(employment_status_mapping)
+display(survey_df.head(10).style.hide(axis='index'))
 
 
 # Fit the log-norma distribution# Fit log-norm distribution using population unemployment rate data
