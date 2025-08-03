@@ -187,11 +187,10 @@ for s in survey_file_names:
     survey_df.append(survey_data)
 # Combine all into a single DataFrame
 survey_df = pd.concat(survey_df, ignore_index=True)
-survey_df['month_year'].unique()
 # decode the industry and employment_status columns
 survey_df['industry_name'] = survey_df['industry'].map(industry_mapping)
 survey_df = survey_df[~survey_df['industry_name'].isna()]
-survey_df['employment_status_description'] = survey_data['employment_status'].map(employment_status_mapping)
+survey_df['employment_status_description'] = survey_df['employment_status'].map(employment_status_mapping)
 display(survey_df.head(10).style.hide(axis='index'))
 
 # Show the graph for unemployment rate by industry
@@ -200,10 +199,11 @@ df_industry = df_dic['Industry']
 df_industry = df_industry[~df_industry['Year'].isin([2020,2021])]
 fig, ax = plt.subplots(figsize = (14,10))
 sns.boxplot(df_industry, x="Industry", y="Unemployment_rate", color='skyblue', ax=ax)
-ax.tick_params(axis='y', labelsize=8)
+ax.tick_params(axis='y', labelsize=10)
+ax.set_xlabel('Industry', fontsize=12)
+ax.set_ylabel('Unemployment Rate', fontsize=12)
 ax.set_title('Distribution of Unemployment Rate by Industry', y = 1.02, fontsize=16)
-ax.tick_params(axis='x', labelsize=8, rotation=90)
-
+ax.tick_params(axis='x', labelsize=13, rotation=90)
 
 
 # Fit the log-norma distribution# Fit log-norm distribution using population unemployment rate data
@@ -484,3 +484,32 @@ ax.set_xlabel("Log-Odds Deviation from Overall Mean")
 ax.set_ylabel("Density")
 ax.set_title("Posterior Distribution of Race Effect Deviations")
 ax.savefig()
+
+
+# PGM for unemployment-industry
+## 1. Exclude some industries and persons "not in labor force"
+survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
+                              'Mining',
+                              'Other services',
+                              'Agriculture, forestry, fishing, and hunting'])]
+survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
+## Factorize the industry_name column to get numerical indices and names
+industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
+survey_df_industry['industry_idx'] = industry_idx
+## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
+survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
+df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
+                              'mining_quarrying_and_oil_and_gas_ extraction',
+                              'other_services',
+                              'agricultural',
+                              'self_employed'])]
+
+ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
+    mean_ur = ('Unemployment_rate','mean'),
+    sd_ur = ('Unemployment_rate', 'std')
+))
+
+
+## Define the Adaptive pooling PyMC model

@@ -230,11 +230,10 @@ for s in survey_file_names:
     survey_df.append(survey_data)
 # Combine all into a single DataFrame
 survey_df = pd.concat(survey_df, ignore_index=True)
-survey_df['month_year'].unique()
 # decode the industry and employment_status columns
 survey_df['industry_name'] = survey_df['industry'].map(industry_mapping)
 survey_df = survey_df[~survey_df['industry_name'].isna()]
-survey_df['employment_status_description'] = survey_data['employment_status'].map(employment_status_mapping)
+survey_df['employment_status_description'] = survey_df['employment_status'].map(employment_status_mapping)
 display(survey_df.head(10).style.hide(axis='index'))
 ```
 
@@ -316,6 +315,7 @@ plt.show()
 ```
 According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (@fig-histogram-unemployment-rate).
 
+### Unemployment Rates of Differenet Industries
 ```{python}
 #| label: fig-boxplot-unemployment-rate-industry
 #| fig-cap: Unemployment Rate Distributions By Industries (2015-2025 statistics)
@@ -327,14 +327,15 @@ df_industry = df_dic['Industry']
 df_industry = df_industry[~df_industry['Year'].isin([2020,2021])]
 fig, ax = plt.subplots(figsize = (14,10))
 sns.boxplot(df_industry, x="Industry", y="Unemployment_rate", color='skyblue', ax=ax)
-ax.tick_params(axis='y', labelsize=8)
+ax.tick_params(axis='y', labelsize=10)
+ax.set_xlabel('Industry', fontsize=12)
+ax.set_ylabel('Unemployment Rate', fontsize=12)
 ax.set_title('Distribution of Unemployment Rate by Industry', y = 1.02, fontsize=16)
-ax.tick_params(axis='x', labelsize=8, rotation=90)
+ax.tick_params(axis='x', labelsize=13, rotation=90)
 ```
-The boxplot illustrates notable variation in unemployment rates across industries. "Agricultural, mining/oil/gas extraction", and "Leisure and hospitality" industries exhibit the highest average and upper extremes, indicating greater instability in employment. In contrast, "Government", "Financial services", and "Education/health services" show consistently low and stable unemployment rates, with narrower interquartile ranges and fewer outliers. These patterns suggest structural differences in labor market vulnerability across sectors. (@fig-boxplot-unemployment-rate-industry).
 
-### Unemployment Rates of Differenet Industries
-(To be added)
+The boxplot illustrates notable variation in unemployment rates across industries. "Agricultural, mining/oil/gas extraction" and "Construction" industries exhibit the highest variation and upper extremes, indicating greater instability in employment. Due to the volatility and unpredictivity as a result of seasonlity, these two categories are going to be excluded from our analysis. In contrast, "Government", "Financial services", and "Education/health services" show consistently low and stable unemployment rates, with narrower interquartile ranges and fewer outliers. These patterns suggest structural differences in labor market vulnerability across sectors. (@fig-boxplot-unemployment-rate-industry).
+
 
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
@@ -874,7 +875,31 @@ ax.savefig()
 The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
 
 ### PGM for unemployment-industry
-(To be added)
+```{python}
+## 1. Exclude some industries and persons "not in labor force"
+survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
+                              'Mining',
+                              'Other services',
+                              'Agriculture, forestry, fishing, and hunting'])]
+survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
+## Factorize the industry_name column to get numerical indices and names
+industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
+survey_df_industry['industry_idx'] = industry_idx
+## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
+survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
+df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
+                              'mining_quarrying_and_oil_and_gas_ extraction',
+                              'other_services',
+                              'agricultural',
+                              'self_employed'])]
+
+ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
+    mean_ur = ('Unemployment_rate','mean'),
+    sd_ur = ('Unemployment_rate', 'std')
+))
+```
 
 ### PGM for recent graduates unemployment time effect
 (stretch goal)
