@@ -917,6 +917,32 @@ def logit(p):
     return np.log(p / (1 - p))
 ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
 ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
+
+## 3. Define the Adaptive pooling PyMC model
+# priors
+ur_by_industry_copy = ur_by_industry.copy()
+ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
+prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
+prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
+# Define the PGM model
+coords = {"industry": industry_names}
+with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+    # Global Priors 
+    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
+    # Industry-Specific Parameters - observed industry means
+    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=mu_alpha_industry, # historical industry means
+                                sigma=sigma,
+                                dims="industry")
+    # Probability of unemployment of each industry determined by alpha_industry
+    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
+    # Observed data - unemployment status
+    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
+                                            p=p_unemployment, 
+                                            observed=survey_df_industry['unemployment_status'].values,
+                                            dims="obs_id")
 ```
 
 ```{python}
@@ -962,6 +988,35 @@ def logit(p):
 ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
 ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
 
+## 3. Define the Adaptive pooling PyMC model
+# priors
+ur_by_industry_copy = ur_by_industry.copy()
+ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
+prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
+prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
+# Define the PGM model
+coords = {"industry": industry_names}
+with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
+    # observed industry idx for each observations
+    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+    # Global Priors 
+    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
+    # Industry-Specific Parameters - observed industry means
+    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # Historical industry means prior
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=mu_alpha_industry, # historical industry means
+                                sigma=sigma,
+                                dims="industry")
+    # Probability of unemployment of each industry for each observation determined by alpha_industry
+    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
+    # Observed data - unemployment status
+    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
+                                            p=p_unemployment, 
+                                            observed=survey_df_industry['unemployment_status'].values,
+                                            dims="obs_id")
+
+## 4. Visualize the PGM
+pm.model_to_graphviz(adaptive_unemployment_industry_model)
 ```
 
 ### PGM for recent graduates unemployment time effect
