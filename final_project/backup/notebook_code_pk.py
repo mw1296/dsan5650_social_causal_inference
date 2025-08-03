@@ -66,7 +66,7 @@ def plot_hist(df_plot, demographic_type):
     plt.suptitle(f'Unemployment Rate Distribution by {demographic_type}', y=1.02, fontsize=18) 
     plt.show()
     
-# Show the graphs
+# Show the graphs 
 for i in range(0, len(df_dic.keys())):
     df_plot = list(df_dic.values())[i]
     demographic_type = list(df_dic.keys())[i]
@@ -175,7 +175,7 @@ df_survey_jun['unemployment_status'] = (df_survey_jun['employment_status_name']=
 ## Show the table with selective columns
 display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
 
-## Process monthly survey data of 2024 Jan-Jul and 2025 Jan-Jul
+## 4. Process monthly survey data of 2024 Jan-Jul and 2025 Jan-Jul
 survey_file_names = [f.removesuffix(".csv") for f in os.listdir('../data/survey_data') if f.endswith("csv")]
 cols = ['prmjind1', 'pemlr'] # keep columns industry and employment_status
 survey_df = []
@@ -193,6 +193,17 @@ survey_df['industry_name'] = survey_df['industry'].map(industry_mapping)
 survey_df = survey_df[~survey_df['industry_name'].isna()]
 survey_df['employment_status_description'] = survey_data['employment_status'].map(employment_status_mapping)
 display(survey_df.head(10).style.hide(axis='index'))
+
+# Show the graph for unemployment rate by industry
+import seaborn as sns
+df_industry = df_dic['Industry']
+df_industry = df_industry[~df_industry['Year'].isin([2020,2021])]
+fig, ax = plt.subplots(figsize = (14,10))
+sns.boxplot(df_industry, x="Industry", y="Unemployment_rate", color='skyblue', ax=ax)
+ax.tick_params(axis='y', labelsize=8)
+ax.set_title('Distribution of Unemployment Rate by Industry', y = 1.02, fontsize=16)
+ax.tick_params(axis='x', labelsize=8, rotation=90)
+
 
 
 # Fit the log-norma distribution# Fit log-norm distribution using population unemployment rate data
