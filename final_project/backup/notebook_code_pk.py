@@ -506,7 +506,7 @@ df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['constructio
                               'other_services',
                               'agricultural',
                               'self_employed',
-                              'Non Durable Goods Industry',
+                              'non_durable_goods',
                               'durable_goods'])]
 
 ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
@@ -558,11 +558,29 @@ with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
 ## 4.Visualize the PGM
 pm.model_to_graphviz(adaptive_unemployment_industry_model)  
 
-## 5.MCMC sampling
+## 5.MCMC sampling and prediction
 with adaptive_unemployment_industry_model:
     ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
-# summary of result
-az.summary(ur_industry_trace, round_to=2)
 # post mean
 ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
-ur_industry_post_mean
+ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
+ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
+
+ur_industry_post_hdi = az.hdi(ur_industry_trace)
+ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)
+ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
+ur_industry_post_hdi_iter.to_dataframe()
+# Plot the posterior alpha_industry (mean of unemployment)
+fig, ax = plt.subplots(figsize=(10, 6))
+ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8)
+ax.vlines(
+    np.arange(industry_names.size),
+    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="lower"),
+    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="higher"),
+    color="orange",
+    alpha=0.6,
+)
+ax.tick_params(axis='x', labelsize=10, rotation=90)
+ax.set_xlabel('Industry', fontsize = 12)
+ax.set_ylabel('Posterior means', fontsize = 12)
+ax.set_title("Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)", y=1.02, fontsize=16)
