@@ -234,7 +234,6 @@ plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
 plt.show()
 
-
 # Fit gamma distribution using MLE
 from scipy.stats import gamma, skew, kstest
 alpha_fit, loc_fit, scale_fit = gamma.fit(data_to_fit) # fit gamma distribution
@@ -561,24 +560,37 @@ pm.model_to_graphviz(adaptive_unemployment_industry_model)
 ## 5.MCMC sampling and prediction
 with adaptive_unemployment_industry_model:
     ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
+# Pring summary table of the trace
+trace_alpha_summary = az.summary(
+    ur_industry_trace,
+    var_names=['alpha_industry'],
+    kind="stats", 
+    round_to=2
+)
+trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
+trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
+trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
+display(trace_alpha_summary)
+
 # post mean
 ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
 ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
 ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
-
+ur_industry_post_mean.to_dataframe()
 ur_industry_post_hdi = az.hdi(ur_industry_trace)
 ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)
 ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
 ur_industry_post_hdi_iter.to_dataframe()
 # Plot the posterior alpha_industry (mean of unemployment)
 fig, ax = plt.subplots(figsize=(10, 8))
-ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8)
+ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
 ax.vlines(
     np.arange(industry_names.size),
     ur_industry_post_hdi_iter.alpha_prob.sel(hdi="lower"),
     ur_industry_post_hdi_iter.alpha_prob.sel(hdi="higher"),
     color="orange",
     alpha=0.6,
+    linewidth=3
 )
 ax.grid(True, linestyle='--', alpha=0.6, color='lightgray')     
 ax.tick_params(axis='x', labelsize=10, rotation=90)
