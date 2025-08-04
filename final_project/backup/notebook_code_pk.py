@@ -572,7 +572,7 @@ trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%']))
 trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
 display(trace_alpha_summary)
 
-# post mean
+# Post mean
 ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
 ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
 ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
@@ -598,4 +598,23 @@ ax.set_xlabel('Industry', fontsize = 12)
 ax.set_ylabel('Posterior means', fontsize = 12)
 ax.set_title("Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)", y=1.02, fontsize=16)
 plt.tight_layout() 
+plt.show()
+# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
+trace_industries= ['Leisure and hospitality',
+              'Financial activities',
+              'Public administration',
+              'Information']
+## create subset of the trace summary with the selected industries alpha transformed to probabilities
+alpha_industry_subset = 1 / (1 + np.exp(-ur_industry_trace.posterior['alpha_industry'].sel(industry=trace_industries)))
+import xarray as xr
+trace_for_plot = az.InferenceData(
+    posterior=xr.Dataset(
+        data_vars={
+            'sigma': ur_industry_trace.posterior['sigma'],
+            'alpha_industry': alpha_industry_subset
+        }
+    )
+)
+az.plot_trace(trace_for_plot)
+plt.tight_layout()
 plt.show()
