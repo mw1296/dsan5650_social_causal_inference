@@ -571,7 +571,7 @@ ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_it
 ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
 ur_industry_post_hdi_iter.to_dataframe()
 # Plot the posterior alpha_industry (mean of unemployment)
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(10, 8))
 ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8)
 ax.vlines(
     np.arange(industry_names.size),
@@ -580,7 +580,10 @@ ax.vlines(
     color="orange",
     alpha=0.6,
 )
+ax.grid(True, linestyle='--', alpha=0.6, color='lightgray')     
 ax.tick_params(axis='x', labelsize=10, rotation=90)
 ax.set_xlabel('Industry', fontsize = 12)
 ax.set_ylabel('Posterior means', fontsize = 12)
 ax.set_title("Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)", y=1.02, fontsize=16)
+plt.tight_layout() 
+plt.show()
