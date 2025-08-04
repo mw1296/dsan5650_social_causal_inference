@@ -10,7 +10,7 @@ keywords:
   - Unemployment Durations
   - Causal Inference
 abstract: |
-  This study investigates the causal relationships between age, occupation, race, and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: time (2015, 2024 and 2025) and group attributes (age, race, and industry). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates by major across 2024 and 2025. A second dimension of analysis focuses on industry-specific unemployment rate dynamics from 2015 to 2025, particularly in [retail], [arts], and [technology] sectors, and how these intersect with racial and age groups. In addition to rate-based measures, the study explores how unemployment duration has evolved between 2015 and 2025 across different occupations and age cohorts. This analysis seeks to identify whether certain groups—such as []—face longer or shorter periods of unemployment today compared to a decade ago, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that recent college graduates in [] majors had a higher unemployment rate of [ ]% in 2025 H1 compared to [ ]% in 2024 H1. Additionally, the [retail], [arts], and [technology] industries experienced increased unemployment rates between 2015 and 2025, with respective changes of [ ], [ ], and [ ] percentage points. The findings also suggest that, consistent with earlier research, unemployment duration is negatively correlated with the unemployment rate by occupation, with industries exhibiting higher unemployment often associated with shorter average durations (Chien, Y., & Morris, P., 2016). The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among [e.g., Black or Hispanic workers] in the [e.g., retail or hospitality] sector. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
+  In its revised report released on July 31, 2025, the U.S. Bureau of Labor Statistics (BLS) reported a sharp slowdown in job creation beginning in May, signaling heightened uncertainty and growing concerns about the overall health of the U.S. labor market. This study investigates the causal relationships between race, industry and unemployment rates in the United States, applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: group attributes (race and industry) and time (2024 vs. 2025). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates across 2024 and 2025. This study first examined the race effect on the unemployment rate disparitu. The industry-specific unemployment rate dynamics focuses on [retail] [] and [Leisure and hospitality] sectors. This analysis seeks to identify whether certain groups—such as Black labor force and [Retail Industry]—face higher or lower unemployment, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that [conclusion1]. Additionally, the [retail], [], and [technology] industries experienced increased unemployment rates between the year of 2015 and the year of 2025, with respective changes of [ ], [ ], and [ ] percentage points. The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among Black workers and the [retail and hospitality] sectors. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
 plain-language-summary: |
   TBD
 key-points:
@@ -34,16 +34,21 @@ Research from the U.S. Bureau of Labor Statistics consistently shows longer unem
 
 ![Unemployment Rate of Recent College Graduates](images/unemployment_rate_recent_graduate.png){#fig-graduates}
 
-Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025, recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, reaching 2021 levels and particularly affecting recent college graduates (@fig-graduates). 
+Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025 (Based on the U.S. Bureau of Labor Statistics (BLS) revised job creation data released on July 31, 2025, a marked decline in job creation has been observed beginning in May, raising substantial concerns regarding the stability of the U.S. labor market.), recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, reaching 2021 levels and particularly affecting recent college graduates (@fig-graduates). 
 
+## Data
 ```{python}
 import warnings
 warnings.filterwarnings('ignore')
 ```
 
 ```{python}
-# Data pre-processing
-# 1. Merge several unemployment statistics excel files downlaoded from BLS webiste
+#| label: tbl-monthly-unemployment-rate-race
+#| tbl-cap: "BLS 2015-2025 Monthly Unemployment Rate By Race"
+#| tbl-col: true
+#| tbl-center: true
+
+# Data pre-processing - part1: Merge monthly unemployment rates by different demographics excel files downlaoded from BLS website
 import pandas as pd
 import os
 #os.getcwd()
@@ -84,19 +89,159 @@ for i in range(0, len(folder_path_list)):
     merged_df = create_df_race(folder_path, demographic_type, "Year", "Month", "Unemployment_rate")
     df_dic[demographic_type] = merged_df
 
+display(df_dic['Race'].head(10).style.hide(axis='index').format({'Unemployment_rate':'{:.2f}'}))
+
 #list(df_dic.values())[0]
 ```
+Data from the U.S. Bureau of Labor Statistics (BLS) 2015 to 2025 monthly aggregated unemployment rate by races. This dataset is used to analyze the race effect on unemployment along with the monthly unemployment rate aggregated data by race (@tbl-monthly-unemployment-rate-race).
+
 ```{python}
-# Data pre-processing
-# 2. Load and process monthly unemployment overall file
+# Data pre-processing - part2: Load and process monthly unemployment overall file
 df_overall = pd.read_excel("../data/unemployment_rate_monthly_data.xlsx", skiprows=11)
 df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="Unemployment_rate")
-
-# 3. Load and process monthly unemployment duration by industry file
 ```
 
+```{python}
+#| label: tbl-survey-data-jun2025
+#| tbl-cap: "BLS June 2025 Labor Force Survey Data"
+#| tbl-col: true
+#| tbl-center: true
+
+# Data pre-processing - part3: Load and process Jun 2025 BLS labor survey data
+# process the survey data
+import numpy as np
+df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
+df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
+                        "unmployment_duration","industry","occupation","industry_detailed",
+                        "occupation_detailed"]
+## create mapping tables to convert the demographic codes to the descriptions
+sex_mapping = {
+        1: "male",
+        2: "female"
+}
+
+education_attainment_codes = list(np.arange(31,47))
+education_attainment_values = [
+        'less_than_high_school',
+		'less_than_high_school',
+		'less_than_high_school',
+        'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'less_than_high_school',
+'high_school',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'some_college_or_associate_degree',
+'bachelors_degree',
+'masters_degree',
+'professional_degree',
+'doctoral_degree'
+    ]    
+education_attainment_mapping=dict(zip(education_attainment_codes,education_attainment_values))
+
+race_codes = list(np.arange(1,27))
+race_values = [
+        "white",
+        "black",
+        "other",
+        "asian"
+    ] + ["other"] * 22
+race_mapping= dict(zip(race_codes, race_values))
+
+
+employment_status_codes =[
+        1,2,3,4,5,6,7
+    ]
+employment_status_names = [
+        "employed",
+        "employed",
+        "unemployed",
+        "unemployed",
+        "not in labor force",
+        "not in labor force",
+        "not in labor force"
+    ]
+employment_status_mapping = dict(zip(employment_status_codes,employment_status_names))
+
+industry_codes = list(np.arange(1,15))
+industry_names = [
+    "Agriculture, forestry, fishing, and hunting",
+    "Mining",
+    "Construction",
+    "Manufacturing",
+    "Wholesale and retail trade",
+    "Transportation and utilities",
+    "Information",
+    "Financial activities",
+    "Professional and business services",
+    "Educational and health services",
+    "Leisure and hospitality",
+    "Other services",
+    "Public administration",
+    "Armed Forces"
+    ]
+industry_mapping = dict(zip(industry_codes, industry_names))
+
+## Create new columns with decoded names
+df_survey_jun['sex_name'] = df_survey_jun['sex'].map(sex_mapping)
+df_survey_jun['race_name'] = df_survey_jun['race'].map(race_mapping)
+df_survey_jun['education_attainment_name'] = df_survey_jun['education_attainment'].map(education_attainment_mapping)
+df_survey_jun['employment_status_name'] = df_survey_jun['employment_status'].map(employment_status_mapping)
+df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
+
+## Filter out industry_name na rows
+df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
+
+## Add columns "is_black" and "unemployment_status" for the binary model
+df_survey_jun['is_black_african'] = (df_survey_jun['race_name']=='black').astype(int)
+
+## Add column is_asian for the binary model
+df_survey_jun['is_asian'] = (df_survey_jun['race_name']=='asian').astype(int)
+
+## Add column is_asian for the binary model
+df_survey_jun['is_white'] = (df_survey_jun['race_name']=='white').astype(int)
+
+## Add column employment_status for the binary model
+df_survey_jun['unemployment_status'] = (df_survey_jun['employment_status_name']=='unemployed').astype(int)
+
+## Display the table
+display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
+
+```
+Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data-jun2025). This dataset is used to sample and predict employment status using the observations in the survey data.
+
+```{python}
+#| label: tbl-survey-data-2024-2025
+#| tbl-cap: "BLS 2024 - 2025 Jan - Jul Labor Force Survey Data"
+#| tbl-col: true
+#| tbl-center: true
+
+## Data pre-processing part3: Process monthly survey data of 2024 Jan-Jul and 2025 Jan-Jul
+survey_file_names = [f.removesuffix(".csv") for f in os.listdir('../data/survey_data') if f.endswith("csv")]
+cols = ['prmjind1', 'pemlr'] # keep columns industry and employment_status
+survey_df = []
+for s in survey_file_names:
+    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s + ".csv" ))
+    survey_data = survey_file[cols]
+    survey_data.columns=['industry','employment_status']
+    survey_data['month_year'] = s
+    survey_df.append(survey_data)
+# Combine all into a single DataFrame
+survey_df = pd.concat(survey_df, ignore_index=True)
+# decode the industry and employment_status columns
+survey_df['industry_name'] = survey_df['industry'].map(industry_mapping)
+survey_df = survey_df[~survey_df['industry_name'].isna()]
+survey_df['employment_status_description'] = survey_df['employment_status'].map(employment_status_mapping)
+display(survey_df.head(10).style.hide(axis='index'))
+```
+
+Data from the U.S. Bureau of Labor Statistics (BLS) historical monthly labor force survey provide individual-level employment status by industries. For the purpose of this study, we utilized 2024 Jan to Jul and 2025 Jan to Jun data. (@tbl-survey-data-2024-2025). This dataset is used to analyze the industry effect on unemployment rate in the recent 2 years.
+
+
 ## EDA
-### Unemployment Rates of Differenet Demographics
+### Unemployment Rates of Differenet Races
 ```{python}
 # Plot the distributions of unemployment stats of different demographic categories 
 
@@ -135,6 +280,7 @@ for i in range(0, len(df_dic.keys())-1):
     plot_hist(df_plot, demographic_type)
    
 ```
+
 ```{python}
 #| label: fig-histogram-unemployment-rate-demographics
 #| fig-cap: Unemployment Rate Distributions By Demographics (2015-2025 statistics)
@@ -148,12 +294,13 @@ print(f"Unemployment Rate Distribution Histograms By {demographic_type}")
 plot_hist(df_plot, demographic_type)
 
 ```
+
 BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil & Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (@fig-histogram-unemployment-rate-demographics).
 
 ```{python}
 #| label: fig-histogram-unemployment-rate
 #| fig-cap: Overall Population Unemployment Rate Distributions (2015-2025 statistics)
-#| fig-alt: Histogram plot of the overall population unemployment rate distributins using 2015-2025 BLS data
+#| fig-alt: Histogram plot of the overall population unemployment rate distributions using 2015-2025 BLS data
 min_rate = df_overall_long['Unemployment_rate'].min()
 max_rate = df_overall_long['Unemployment_rate'].max()
 num_bins = 20
@@ -167,13 +314,37 @@ plt.tight_layout()
 plt.suptitle("Population Unemployment Rate", y =1.02, fontsize=18)
 plt.show()
 ```
+
 According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (@fig-histogram-unemployment-rate).
+
+### Unemployment Rates of Differenet Industries
+```{python}
+#| label: fig-boxplot-unemployment-rate-industry
+#| fig-cap: Unemployment Rate Distributions By Industries (2015-2025 statistics)
+#| fig-alt: Boxplot of the industry unemployment rates distributions using 2015-2025 BLS data
+
+# Boxplot for unemployment rate by industry
+import seaborn as sns
+df_industry = df_dic['Industry']
+df_industry = df_industry[~df_industry['Year'].isin([2020,2021])]
+fig, ax = plt.subplots(figsize = (14,10))
+sns.boxplot(df_industry, x="Industry", y="Unemployment_rate", color='skyblue', ax=ax)
+ax.tick_params(axis='y', labelsize=10)
+ax.set_xlabel('Industry', fontsize=12)
+ax.set_ylabel('Unemployment Rate', fontsize=12)
+ax.set_title('Distribution of Unemployment Rate by Industry', y = 1.02, fontsize=16)
+ax.tick_params(axis='x', labelsize=13, rotation=90)
+```
+
+The boxplot illustrates notable variation in unemployment rates across industries. "Agricultural, mining/oil/gas extraction" and "Construction" industries exhibit the highest variation and upper extremes, indicating greater instability in employment. Due to the volatility and unpredictivity as a result of seasonlity, these two categories are going to be excluded from our analysis. In contrast, "Government", "Financial services", and "Education/health services" show consistently low and stable unemployment rates, with narrower interquartile ranges and fewer outliers. These patterns suggest structural differences in labor market vulnerability across sectors. (@fig-boxplot-unemployment-rate-industry).
+
 
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
 
 ### Baseline unemployment rate distribution 
 Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. ($\sigma$, $\text{loc}$, and $\text{scale}$).
+
 ```{python}
 #| label: fig-histogram-lognorm
 #| fig-cap: Unmployment Rate Histogram vs. Fitted Log-Norm PDF
@@ -211,6 +382,7 @@ plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
 plt.show()
 ```
+
 By overlaying the smooth PDF curve on top of original data's histogram, we can visualize that the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (@fig-histogram-lognorm).
 Now we need to use Kolmogorov-Smirnov Test to test Goodness-of-fit with the original data and estimated parameters, then examine the p value. 
 
@@ -222,6 +394,7 @@ print(f"  D-statistic: {d_statistic:.4f}")
 print(f"  P-value: {p_value:.4f}")
 
 ```
+
 With $p$-value < 0.05, we can't reject the hypothesis that the distribution does not come from the Log-Normal distribution, suggesting Log-Normal is not a good fit for the data. Next, explore other right-skewed distributions - Gamma distribution or the Weibull distribution.
 
 ```{python}
@@ -256,8 +429,8 @@ ax.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Gamma Distribution PDF", y=1.02, fontsize=18)
 plt.show()
-
 ```
+
 Although visually the Gamma distribution matches the shape and spread of the actual data. (@fig-histogram-gamma), we need to
 use KS Test to test Goodness-of-fit by examining the p value. 
 
@@ -303,7 +476,6 @@ ax.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Weibull Distribution PDF", y=1.02, fontsize=18)
 plt.show()
-
 ```
 
 ```{python}
@@ -324,7 +496,7 @@ fitted_mean = loc_fit + scale_fit * gamma_func(1 + 1/c_fit)
 
 # Print out the Weibull stats
 weibull_stats = {
-  "parameters": [
+  "Parameters": [
     "Shape (c)",
     "Location (loc)" ,
     "Scale",
@@ -332,7 +504,7 @@ weibull_stats = {
     "P-value",
     "Fitted Mean"
   ],
-  "values": [
+  "Values": [
      round(c_fit, 4),
      round(loc_fit, 4),
      round(scale_fit, 4),
@@ -345,63 +517,670 @@ weibull_stats_table = pd.DataFrame(weibull_stats)
 display(weibull_stats_table.style.hide(axis="index"))
 ```
 
-The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.36 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
+The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.35 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
 
-```{python}
-# Create variable "baseline" as baseline level of unemployment rate
-
-# Create variable - unemployment_vulnerability 
-# unemployment_vulnerability = pm.math.invlogit(
-#         baseline # baseline unemployment rate
-#         + race_effect[race]
-#         + age_effect[age]
-#         + education_effect[education_attainment]
-#         + industry_effect[industry]
-#     )
-```
-```{python}
-import matplotlib.pyplot as plt
-import numpy as np
-eruptions = [1492, 1585, 1646, 1677, 1712, 1949, 1971, 2021]
+### Define the prior means for overall population
+```python
+### population unemployment mean probability from the fitted Weibull distribution
+weibull_fitted_mean_prob = 0.0435
+# Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
+population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
 ```
 
+```{python}
+### population unemployment mean probability from the fitted Weibull distribution
+weibull_fitted_mean_prob = 0.0435
+# Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
+population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+```
 
-$$
-p(x) = \frac{e^{-\lambda} \lambda^{x}}{x !}
-$$ {#eq-poisson}
+### Define the prior means by races
+```python
+# Function to find the means of different demographics
+def mean_prob_demographic(df_name, demographic_type, demographic_description):
+    demographic_mean_prob = df_dic[df_name].loc[df_dic[df_name][demographic_type]==demographic_description]['Unemployment_rate'].mean()/100
+    demographic_mean_log_odds = np.log(demographic_mean_prob / (1 - demographic_mean_prob))
+    # beta_effect is the difference between the demographic group mean log-odds and the population mean log-odds
+    beta_effect = demographic_mean_log_odds - population_mean_log_odds
+    return beta_effect
 
-where $\lambda$ is the rate of eruptions per year. Using @eq-poisson, the probability of an eruption in the next $t$ years can be calculated.
+# Create a grid of demographic information to return the means
+demographic_grid = pd.DataFrame({
+    "df_name":[
+        'Race',
+        'Race',
+        'Race'
+    ],
+    "demographic_type":[
+        "Race", 
+        "Race",
+        "Race"
+    ],
+    "demographic_description":[
+        'black_and_african',
+        'white',
+        'asian'
+    ]
+})
+# Return the beta_effect of different demographics
+demographic_grid['beta_effect']= np.float64(0)
+for row in range(0,len(demographic_grid)):
+    # Mean of demographic groups
+    beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
+    demographic_grid['beta_effect'][row] = beta_effect
 
-| Name                | Year |
-|---------------------|------|
-| Current             | 2021 |
-| Teneguía            | 1971 |
-| Nambroque           | 1949 |
-| El Charco           | 1712 |
-| Volcán San Antonio  | 1677 |
-| Volcán San Martin   | 1646 |
-| Tajuya near El Paso | 1585 |
-| Montaña Quemada     | 1492 |
+```
 
-: Recent historic eruptions on La Palma {#tbl-history}
+```{python}
+# Function to find the means of different demographics
+def mean_prob_demographic(df_name, demographic_type, demographic_description):
+    demographic_mean_prob = df_dic[df_name].loc[df_dic[df_name][demographic_type]==demographic_description]['Unemployment_rate'].mean()/100
+    demographic_mean_log_odds = np.log(demographic_mean_prob / (1 - demographic_mean_prob))
+    # beta_effect is the difference between the demographic group mean log-odds and the population mean log-odds
+    beta_effect = demographic_mean_log_odds - population_mean_log_odds
+    return beta_effect
 
-@tbl-history summarises the eruptions recorded since the colonization of the islands by Europeans in the late 1400s.
+# Create a grid of demographic information to return the means
+demographic_grid = pd.DataFrame({
+    "df_name":[
+        'Race',
+        'Race',
+        'Race'
+    ],
+    "demographic_type":[
+        "Race", 
+        "Race",
+        "Race"
+    ],
+    "demographic_description":[
+        'black_and_african',
+        'white',
+        'asian'
+    ]
+})
+# Return the beta_effect of different demographics
+demographic_grid['beta_effect']= np.float64(0)
+for row in range(0,len(demographic_grid)):
+    # Mean of demographic groups
+    beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
+    demographic_grid['beta_effect'][row] = beta_effect
 
-![Map of La Palma](images/la-palma-map.png){#fig-map}
+```
 
-La Palma is one of the west most islands in the Volcanic Archipelago of the Canary Islands (@fig-map).
+### Define the unemployment-race PyMC
+This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
 
-{{< embed notebooks/data-screening.qmd#fig-spatial-plot >}}
+```python
+# Create the pymc model
+import pymc as pm
+import arviz as az
 
-@fig-spatial-plot shows the location of recent Earthquakes on La Palma.
+with pm.Model() as unemployment_race_model:
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
+    
+    # Additive race effect parameter on population mean
+    beta_black = pm.Normal('beta_black', mu=demographic_grid[demographic_grid['demographic_description']=='black_and_african']['beta_effect'], sigma=0.3) # Can be positive or negative
 
-Data and methods are discussed in @sec-data-methods.
+    beta_asian = pm.Normal('beta_asian', mu=demographic_grid[demographic_grid['demographic_description']=='asian']['beta_effect'], sigma=0.3) 
 
-Let $x$ denote the number of eruptions in a year. Then, $x$ can be modeled by a Poisson distribution
+    beta_white = pm.Normal('beta_white', mu=demographic_grid[demographic_grid['demographic_description']=='white']['beta_effect'], sigma=0.3) 
+    
+    # noise
+    sigma = pm.HalfNormal('sigma', sigma=0.2)
 
-## Data & Methods {#sec-data-methods}
+    # log-odds and probabilities for each racial group
+    mu_white_log_odds = pm.Deterministic('mu_white_log_odds', mu_population_log_odds + beta_white)
+    mu_black_log_odds = pm.Deterministic('mu_black_log_odds', mu_population_log_odds + beta_black)
+    mu_asian_log_odds = pm.Deterministic('mu_asian_log_odds', mu_population_log_odds + beta_asian)
 
-## Conclusion
+    p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
+    p_white = pm.Deterministic('p_white', pm.math.invlogit(mu_white_log_odds))
+    p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
+    p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
+
+    # Likelihoods for observed data: use parameters like derived above to make predictions about the "true" probabilities of unemployment.
+
+    # predict population mean
+    population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
+    population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
+    population_rates_obs = pm.Normal(
+        'population_rates_obs',
+        mu=mu_population_log_odds, 
+        sigma=sigma,
+        observed=population_rates_df['rate_logit'].values
+    )
+
+    # predict black mean
+    black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
+    black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
+    black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
+    black_rates_obs = pm.Normal(
+        'black_rates_obs',
+        mu=mu_black_log_odds, 
+        sigma=sigma,
+        observed=black_rates_df['rate_logit'].values
+    )
+
+    # predict asian mean
+    asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
+    asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
+    asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
+    asian_rates_obs = pm.Normal(
+        'asian_rates_obs',
+        mu=mu_asian_log_odds,
+        sigma=sigma,
+        observed=asian_rates_df['rate_logit'].values
+    )
+
+    # predict white mean
+    white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
+    white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
+    white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
+    white_rates_obs = pm.Normal(
+        'white_rates_obs',
+        mu=mu_white_log_odds,
+        sigma=sigma,
+        observed=white_rates_df['rate_logit'].values
+    )
+    
+    # Assign the correct probability based on race
+    p_individual_for_obs = pm.math.switch(
+        df_survey_jun['is_black_african'].values,
+        p_black, # if is_black, use black prob
+        pm.math.switch(
+            df_survey_jun['is_asian'].values, 
+            p_asian, # if is_asian, use asian prob
+            p_white # else, use white prob
+        )
+    )
+    individual_status_obs = pm.Bernoulli(
+        'individual_status_obs',
+        p=p_individual_for_obs,
+        observed=df_survey_jun['unemployment_status'].values
+    )
+```
+
+```{python}
+# Create the pymc model
+import pymc as pm
+import arviz as az
+
+with pm.Model() as unemployment_race_model:
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
+    
+    # Additive race effect parameter on population mean
+    beta_black = pm.Normal('beta_black', mu=demographic_grid[demographic_grid['demographic_description']=='black_and_african']['beta_effect'], sigma=0.3) # Can be positive or negative
+
+    beta_asian = pm.Normal('beta_asian', mu=demographic_grid[demographic_grid['demographic_description']=='asian']['beta_effect'], sigma=0.3) 
+
+    beta_white = pm.Normal('beta_white', mu=demographic_grid[demographic_grid['demographic_description']=='white']['beta_effect'], sigma=0.3) 
+    
+    # noise
+    sigma = pm.HalfNormal('sigma', sigma=0.2)
+
+    # log-odds and probabilities for each racial group
+    mu_white_log_odds = pm.Deterministic('mu_white_log_odds', mu_population_log_odds + beta_white)
+    mu_black_log_odds = pm.Deterministic('mu_black_log_odds', mu_population_log_odds + beta_black)
+    mu_asian_log_odds = pm.Deterministic('mu_asian_log_odds', mu_population_log_odds + beta_asian)
+
+    p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
+    p_white = pm.Deterministic('p_white', pm.math.invlogit(mu_white_log_odds))
+    p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
+    p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
+
+    # Likelihoods for observed data: use parameters like derived above to make predictions about the "true" probabilities of unemployment.
+
+    # predict population mean
+    population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
+    population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
+    population_rates_obs = pm.Normal(
+        'population_rates_obs',
+        mu=mu_population_log_odds, 
+        sigma=sigma,
+        observed=population_rates_df['rate_logit'].values
+    )
+
+    # predict black mean
+    black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
+    black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
+    black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
+    black_rates_obs = pm.Normal(
+        'black_rates_obs',
+        mu=mu_black_log_odds, 
+        sigma=sigma,
+        observed=black_rates_df['rate_logit'].values
+    )
+
+    # predict asian mean
+    asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
+    asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
+    asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
+    asian_rates_obs = pm.Normal(
+        'asian_rates_obs',
+        mu=mu_asian_log_odds,
+        sigma=sigma,
+        observed=asian_rates_df['rate_logit'].values
+    )
+
+    # predict white mean
+    white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
+    white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
+    white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
+    white_rates_obs = pm.Normal(
+        'white_rates_obs',
+        mu=mu_white_log_odds,
+        sigma=sigma,
+        observed=white_rates_df['rate_logit'].values
+    )
+    
+    # Assign the correct probability based on race
+    p_individual_for_obs = pm.math.switch(
+        df_survey_jun['is_black_african'].values,
+        p_black, # if is_black, use black prob
+        pm.math.switch(
+            df_survey_jun['is_asian'].values, 
+            p_asian, # if is_asian, use asian prob
+            p_white # else, use white prob
+        )
+    )
+    individual_status_obs = pm.Bernoulli(
+        'individual_status_obs',
+        p=p_individual_for_obs,
+        observed=df_survey_jun['unemployment_status'].values
+    )
+```
+
+### Graph the unemployment-race PGM
+```python
+pm.model_to_graphviz(unemployment_race_model)
+```
+
+```{python}
+pm.model_to_graphviz(unemployment_race_model)
+```
+
+### Fit the unemployment-race Model - Perform MCMC Sampling
+```python
+print("Starting MCMC sampling...")
+with unemployment_race_model:
+    indiv_trace = pm.sample(random_seed=5650)
+```
+
+```{python}
+print("Starting MCMC sampling...")
+with unemployment_race_model:
+    indiv_trace = pm.sample(random_seed=5650)
+```
+
+### Analyze unemployment-race Results and Visualize
+```python
+# Analyze Results and Visualize
+print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
+display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
+
+# Trace plot
+fig_trace = az.plot_trace(indiv_trace)
+plt.suptitle('Trace plot', fontsize=16)
+plt.subplots_adjust(hspace=0.5) 
+
+# Convert to DataFrame
+indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+# Extract only the first chain
+indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+# Melt
+indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+
+# Density plot
+import seaborn as sns
+import patchworklib as pw
+ax = pw.Brick(figsize=(4, 2.5));
+sns.kdeplot(
+    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    fill=True, bw_adjust=2,
+);
+ax.set_xlabel("Log-Odds Deviation from Overall Mean")
+ax.set_ylabel("Density")
+ax.set_title("Posterior Distribution of Race Effect Deviations")
+```
+
+```{python}
+# Analyze Results and Visualize
+print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
+display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
+
+# Trace plot
+fig_trace = az.plot_trace(indiv_trace)
+plt.suptitle('Trace plot', fontsize=16)
+plt.subplots_adjust(hspace=0.5) 
+
+# Convert to DataFrame
+indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+# Extract only the first chain
+indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+# Melt
+indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+
+# Density plot
+import seaborn as sns
+import patchworklib as pw
+ax = pw.Brick(figsize=(4, 2.5));
+sns.kdeplot(
+    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    fill=True, bw_adjust=2,
+);
+ax.set_xlabel("Log-Odds Deviation from Overall Mean")
+ax.set_ylabel("Density")
+ax.set_title("Posterior Distribution of Race Effect Deviations")
+ax.savefig()
+
+```
+
+The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
+
+### PGM for unemployment-industry
+```python
+## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
+survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
+                              'Mining',
+                              'Other services',
+                              'Agriculture, forestry, fishing, and hunting',
+                              'Armed Forces'])]
+survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
+## Factorize the industry_name column to get numerical indices and names
+industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
+survey_df_industry['industry_idx'] = industry_idx
+## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
+survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
+df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
+                              'mining_quarrying_and_oil_and_gas_ extraction',
+                              'other_services',
+                              'agricultural',
+                              'self_employed',
+                              'non_durable_goods',
+                              'durable_goods'])]
+
+ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
+    mean_ur = ('Unemployment_rate','mean'),
+    sd_ur = ('Unemployment_rate', 'std')
+))
+ # modify the industry name column to align with industry_names
+ur_by_industry['Industry']=['Educational and health services',
+                            'Financial activities',
+                            'Public administration',
+                            'Information',
+                            'Leisure and hospitality',
+                            'Manufacturing',
+                            'Professional and business services',
+                            'Transportation and utilities',
+                            'Wholesale and retail trade']
+# Logit transformation function
+def logit(p):
+    return np.log(p / (1 - p))
+ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
+ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
+
+## 3. Define the Adaptive pooling PyMC model
+# priors
+ur_by_industry_copy = ur_by_industry.copy()
+ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
+prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
+prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
+# Define the PGM model
+coords = {"industry": industry_names}
+with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+    # Global Priors 
+    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
+    # Industry-Specific Parameters - observed industry means
+    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=mu_alpha_industry, # historical industry means
+                                sigma=sigma,
+                                dims="industry")
+    # Probability of unemployment of each industry determined by alpha_industry
+    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
+    # Observed data - unemployment status
+    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
+                                            p=p_unemployment, 
+                                            observed=survey_df_industry['unemployment_status'].values,
+                                            dims="obs_id")
+```
+
+```python
+## 4.Visualize the PGM
+pm.model_to_graphviz(adaptive_unemployment_industry_model)  
+```
+
+```python
+## 5.MCMC sampling and prediction
+with adaptive_unemployment_industry_model:
+    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
+# Pring summary of the trace
+trace_alpha_summary = az.summary(
+    ur_industry_trace,
+    var_names=['alpha_industry'],
+    kind="stats", 
+    round_to=2
+)
+trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
+trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
+trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
+display(trace_alpha_summary)
+```
+
+```python
+# Posterior mean
+ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
+ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
+ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
+ur_industry_post_mean.to_dataframe()
+ur_industry_post_hdi = az.hdi(ur_industry_trace)
+ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)
+ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
+ur_industry_post_hdi_iter.to_dataframe()
+# Plot the posterior alpha_industry (mean of unemployment)
+fig, ax = plt.subplots(figsize=(10, 8))
+ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
+ax.vlines(
+    np.arange(industry_names.size),
+    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="lower"),
+    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="higher"),
+    color="orange",
+    alpha=0.6,
+    linewidth=3
+)
+ax.grid(True, linestyle='--', alpha=0.6, color='lightgray')     
+ax.tick_params(axis='x', labelsize=10, rotation=90)
+ax.set_xlabel('Industry', fontsize = 12)
+ax.set_ylabel('Posterior means', fontsize = 12)
+ax.set_title("Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)", y=1.02, fontsize=16)
+plt.tight_layout() 
+plt.show()
+```
+
+```python
+# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
+trace_industries= ['Leisure and hospitality',
+              'Financial activities',
+              'Public administration',
+              'Information']
+## create subset of the trace summary with the selected industries alpha transformed to probabilities
+alpha_industry_subset = 1 / (1 + np.exp(-ur_industry_trace.posterior['alpha_industry'].sel(industry=trace_industries)))
+import xarray as xr
+trace_for_plot = az.InferenceData(
+    posterior=xr.Dataset(
+        data_vars={
+            'sigma': ur_industry_trace.posterior['sigma'],
+            'alpha_industry': alpha_industry_subset
+        }
+    )
+)
+az.plot_trace(trace_for_plot)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
+survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
+                              'Mining',
+                              'Other services',
+                              'Agriculture, forestry, fishing, and hunting',
+                              'Armed Forces'])]
+survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
+## Factorize the industry_name column to get numerical indices and names
+industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
+survey_df_industry['industry_idx'] = industry_idx
+## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
+survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
+df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
+                              'mining_quarrying_and_oil_and_gas_ extraction',
+                              'other_services',
+                              'agricultural',
+                              'self_employed',
+                              'non_durable_goods',
+                              'durable_goods'])]
+
+ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
+    mean_ur = ('Unemployment_rate','mean'),
+    sd_ur = ('Unemployment_rate', 'std')
+))
+ # modify the industry name column to align with industry_names
+ur_by_industry['Industry']=['Educational and health services',
+                            'Financial activities',
+                            'Public administration',
+                            'Information',
+                            'Leisure and hospitality',
+                            'Manufacturing',
+                            'Professional and business services',
+                            'Transportation and utilities',
+                            'Wholesale and retail trade']
+# Logit transformation function
+def logit(p):
+    return np.log(p / (1 - p))
+ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
+ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
+
+## 3. Define the Adaptive pooling PyMC model
+# priors
+ur_by_industry_copy = ur_by_industry.copy()
+ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
+prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
+prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
+# Define the PGM model
+coords = {"industry": industry_names}
+with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+    # Global Priors 
+    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
+    # Industry-Specific Parameters - observed industry means
+    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=mu_alpha_industry, # historical industry means
+                                sigma=sigma,
+                                dims="industry")
+    # Probability of unemployment of each industry determined by alpha_industry
+    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
+    # Observed data - unemployment status
+    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
+                                            p=p_unemployment, 
+                                            observed=survey_df_industry['unemployment_status'].values,
+                                            dims="obs_id")
+```
+
+```{python}
+## 4.Visualize the PGM
+display(pm.model_to_graphviz(adaptive_unemployment_industry_model))
+```
+
+```{python}
+#| label: tbl-industry-trace-summary
+#| tbl-cap: "Summary of Posterior Distributions"
+#| tbl-col: true
+#| tbl-center: true
+## 5.MCMC sampling and prediction
+with adaptive_unemployment_industry_model:
+    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
+# Pring summary of the trace
+trace_alpha_summary = az.summary(
+    ur_industry_trace,
+    var_names=['alpha_industry'],
+    kind="stats", 
+    round_to=2
+)
+trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
+trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
+trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
+display(trace_alpha_summary)
+```
+
+The provided trace summary @tbl-industry-trace-summary details the posterior estimates for the alpha_industry parameters, which represent the estimated industry-specific parameters for unemployment probability. For example, 'Leisure and hospitality' has a mean of 0.056, while 'Public administration' has a mean of 0.018. The sd, hdi_3% and hdi_97% are consistently quite narrow across all industries, (e.g., 'Leisure and hospitality' from 0.055 to 0.059, a range of 0.004). This indicates a strong concentration of posterior probability around the mean estimates.
+
+```{python}
+#| label: fig-industry-pgm-scatter
+#| fig-cap: Estimated Industry-Specific Unemployment Rate (Adaptive Pooliing)
+#| fig-alt: Plot the scatter plot of the estimated unemployment rates by industries
+
+# Posterior mean
+ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
+ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
+ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
+ur_industry_post_mean.to_dataframe()
+ur_industry_post_hdi = az.hdi(ur_industry_trace)
+ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)
+ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
+ur_industry_post_hdi_iter.to_dataframe()
+# Plot the posterior alpha_industry (mean of unemployment)
+fig, ax = plt.subplots(figsize=(10, 8))
+ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
+ax.vlines(
+    np.arange(industry_names.size),
+    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="lower"),
+    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="higher"),
+    color="orange",
+    alpha=0.6,
+    linewidth=3
+)
+ax.grid(True, linestyle='--', alpha=0.6, color='lightgray')     
+ax.tick_params(axis='x', labelsize=10, rotation=90)
+ax.set_xlabel('Industry', fontsize = 12)
+ax.set_ylabel('Posterior means', fontsize = 12)
+ax.set_title("Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)", y=1.02, fontsize=16)
+plt.tight_layout() 
+plt.show()
+```
+
+The PGM estimated unemployment rates graphed in @fig-industry-pgm-scatter reveals distinct causal influences of industry type on unemployment probability. The model infers that the 'Leisure and Hospitality' industry has the highest positive causal effect on unemployment likelihood. Conversely, 'Public Administration' and 'Financial Services' show a negative causal influence, resulting in lower estimated unemployment rates. The 'Information' industry, while having the second-highest mean unemployment, exhibits the widest credible interval, indicating greater uncertainty in quantifying its causal impact on employment stability.
+
+```{python}
+# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
+trace_industries= ['Leisure and hospitality',
+              'Financial activities',
+              'Public administration',
+              'Information']
+## create subset of the trace summary with the selected industries alpha transformed to probabilities
+alpha_industry_subset = 1 / (1 + np.exp(-ur_industry_trace.posterior['alpha_industry'].sel(industry=trace_industries)))
+import xarray as xr
+trace_for_plot = az.InferenceData(
+    posterior=xr.Dataset(
+        data_vars={
+            'sigma': ur_industry_trace.posterior['sigma'],
+            'alpha_industry': alpha_industry_subset
+        }
+    )
+)
+az.plot_trace(trace_for_plot)
+plt.tight_layout()
+plt.show()
+```
+
+
 
 ## References {.unnumbered}
 

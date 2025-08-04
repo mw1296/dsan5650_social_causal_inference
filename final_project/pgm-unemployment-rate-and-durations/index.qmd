@@ -294,6 +294,7 @@ print(f"Unemployment Rate Distribution Histograms By {demographic_type}")
 plot_hist(df_plot, demographic_type)
 
 ```
+
 BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil & Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (@fig-histogram-unemployment-rate-demographics).
 
 ```{python}
@@ -313,6 +314,7 @@ plt.tight_layout()
 plt.suptitle("Population Unemployment Rate", y =1.02, fontsize=18)
 plt.show()
 ```
+
 According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (@fig-histogram-unemployment-rate).
 
 ### Unemployment Rates of Differenet Industries
@@ -342,6 +344,7 @@ We posit that unemployment vulnerability is driven by structural inequalities wi
 
 ### Baseline unemployment rate distribution 
 Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. ($\sigma$, $\text{loc}$, and $\text{scale}$).
+
 ```{python}
 #| label: fig-histogram-lognorm
 #| fig-cap: Unmployment Rate Histogram vs. Fitted Log-Norm PDF
@@ -379,6 +382,7 @@ plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Log-Normal Distribution PDF", y=1.02, fontsize=18)
 plt.show()
 ```
+
 By overlaying the smooth PDF curve on top of original data's histogram, we can visualize that the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (@fig-histogram-lognorm).
 Now we need to use Kolmogorov-Smirnov Test to test Goodness-of-fit with the original data and estimated parameters, then examine the p value. 
 
@@ -390,6 +394,7 @@ print(f"  D-statistic: {d_statistic:.4f}")
 print(f"  P-value: {p_value:.4f}")
 
 ```
+
 With $p$-value < 0.05, we can't reject the hypothesis that the distribution does not come from the Log-Normal distribution, suggesting Log-Normal is not a good fit for the data. Next, explore other right-skewed distributions - Gamma distribution or the Weibull distribution.
 
 ```{python}
@@ -424,8 +429,8 @@ ax.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Gamma Distribution PDF", y=1.02, fontsize=18)
 plt.show()
-
 ```
+
 Although visually the Gamma distribution matches the shape and spread of the actual data. (@fig-histogram-gamma), we need to
 use KS Test to test Goodness-of-fit by examining the p value. 
 
@@ -471,7 +476,6 @@ ax.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.suptitle("Data Histogram vs. Fitted Weibull Distribution PDF", y=1.02, fontsize=18)
 plt.show()
-
 ```
 
 ```{python}
@@ -558,7 +562,7 @@ demographic_grid = pd.DataFrame({
         'asian'
     ]
 })
-# Return the means
+# Return the beta_effect of different demographics
 demographic_grid['beta_effect']= np.float64(0)
 for row in range(0,len(demographic_grid)):
     # Mean of demographic groups
@@ -605,8 +609,8 @@ for row in range(0,len(demographic_grid)):
 
 ### Define the unemployment-race PyMC
 This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
-```python
 
+```python
 # Create the pymc model
 import pymc as pm
 import arviz as az
@@ -698,6 +702,7 @@ with pm.Model() as unemployment_race_model:
 ```
 
 ```{python}
+# Create the pymc model
 import pymc as pm
 import arviz as az
 
@@ -785,13 +790,13 @@ with pm.Model() as unemployment_race_model:
         p=p_individual_for_obs,
         observed=df_survey_jun['unemployment_status'].values
     )
-
 ```
 
 ### Graph the unemployment-race PGM
 ```python
 pm.model_to_graphviz(unemployment_race_model)
 ```
+
 ```{python}
 pm.model_to_graphviz(unemployment_race_model)
 ```
@@ -814,6 +819,7 @@ with unemployment_race_model:
 # Analyze Results and Visualize
 print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
 display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
+
 # Trace plot
 fig_trace = az.plot_trace(indiv_trace)
 plt.suptitle('Trace plot', fontsize=16)
@@ -826,7 +832,7 @@ indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
 # Melt
 indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
 
-# Density Plot
+# Density plot
 import seaborn as sns
 import patchworklib as pw
 ax = pw.Brick(figsize=(4, 2.5));
@@ -837,7 +843,6 @@ sns.kdeplot(
 ax.set_xlabel("Log-Odds Deviation from Overall Mean")
 ax.set_ylabel("Density")
 ax.set_title("Posterior Distribution of Race Effect Deviations")
-
 ```
 
 ```{python}
@@ -875,6 +880,7 @@ ax.savefig()
 The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
 
 ### PGM for unemployment-industry
+
 ```python
 ## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
 survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
@@ -943,12 +949,89 @@ with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
                                             p=p_unemployment, 
                                             observed=survey_df_industry['unemployment_status'].values,
                                             dims="obs_id")
-
 ```
+
+
+```{python}
+## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
+survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
+                              'Mining',
+                              'Other services',
+                              'Agriculture, forestry, fishing, and hunting',
+                              'Armed Forces'])]
+survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
+## Factorize the industry_name column to get numerical indices and names
+industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
+survey_df_industry['industry_idx'] = industry_idx
+## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
+survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
+df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
+                              'mining_quarrying_and_oil_and_gas_ extraction',
+                              'other_services',
+                              'agricultural',
+                              'self_employed',
+                              'non_durable_goods',
+                              'durable_goods'])]
+
+ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
+    mean_ur = ('Unemployment_rate','mean'),
+    sd_ur = ('Unemployment_rate', 'std')
+))
+ # modify the industry name column to align with industry_names
+ur_by_industry['Industry']=['Educational and health services',
+                            'Financial activities',
+                            'Public administration',
+                            'Information',
+                            'Leisure and hospitality',
+                            'Manufacturing',
+                            'Professional and business services',
+                            'Transportation and utilities',
+                            'Wholesale and retail trade']
+# Logit transformation function
+def logit(p):
+    return np.log(p / (1 - p))
+ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
+ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
+
+## 3. Define the Adaptive pooling PyMC model
+# priors
+ur_by_industry_copy = ur_by_industry.copy()
+ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
+prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
+prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
+# Define the PGM model
+coords = {"industry": industry_names}
+with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+    # Global Priors 
+    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
+    # Industry-Specific Parameters - observed industry means
+    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=mu_alpha_industry, # historical industry means
+                                sigma=sigma,
+                                dims="industry")
+    # Probability of unemployment of each industry determined by alpha_industry
+    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
+    # Observed data - unemployment status
+    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
+                                            p=p_unemployment, 
+                                            observed=survey_df_industry['unemployment_status'].values,
+                                            dims="obs_id")
+```
+
 ```python
 ## 4.Visualize the PGM
 pm.model_to_graphviz(adaptive_unemployment_industry_model)  
 ```
+
+```{python}
+## 4.Visualize the PGM
+display(pm.model_to_graphviz(adaptive_unemployment_industry_model))
+```
+
 ```python
 ## 5.MCMC sampling and prediction
 with adaptive_unemployment_industry_model:
@@ -960,11 +1043,44 @@ trace_alpha_summary = az.summary(
     kind="stats", 
     round_to=2
 )
+trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
+trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
+trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
 display(trace_alpha_summary)
 ```
 
+
+
+```{python}
+## 5.MCMC sampling and prediction
+with adaptive_unemployment_industry_model:
+    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
+# Pring summary of the trace
+trace_alpha_summary = az.summary(
+    ur_industry_trace,
+    var_names=['alpha_industry'],
+    kind="stats", 
+    round_to=2
+)
+```
+
+```{python}
+#| label: tbl-industry-trace-summary
+#| tbl-cap: "Summary of Posterior Distributions"
+#| tbl-col: true
+#| tbl-center: true
+
+trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
+trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
+trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
+display(trace_alpha_summary)
+```
+
+The provided trace summary (@tbl-industry-trace-summary) details the posterior estimates for the alpha_industry parameters, which represent the estimated industry-specific parameters for unemployment probability. For example, 'Leisure and hospitality' has a mean of 0.056, while 'Public administration' has a mean of 0.018. The sd, hdi_3% and hdi_97% are consistently quite narrow across all industries, (e.g., 'Leisure and hospitality' from 0.055 to 0.059, a range of 0.004). This indicates a strong concentration of posterior probability around the mean estimates.
+
+
 ```python
-# post mean
+# Posterior mean
 ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
 ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
 ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
@@ -990,126 +1106,8 @@ ax.set_xlabel('Industry', fontsize = 12)
 ax.set_ylabel('Posterior means', fontsize = 12)
 ax.set_title("Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)", y=1.02, fontsize=16)
 plt.tight_layout() 
-```
-
-```python
-# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
-trace_industries= ['Leisure and hospitality',
-              'Financial activities',
-              'Public administration',
-              'Information']
-## create subset of the trace summary with the selected industries alpha transformed to probabilities
-alpha_industry_subset = 1 / (1 + np.exp(-ur_industry_trace.posterior['alpha_industry'].sel(industry=trace_industries)))
-import xarray as xr
-trace_for_plot = az.InferenceData(
-    posterior=xr.Dataset(
-        data_vars={
-            'sigma': ur_industry_trace.posterior['sigma'],
-            'alpha_industry': alpha_industry_subset
-        }
-    )
-)
-az.plot_trace(trace_for_plot)
-plt.tight_layout()
 plt.show()
 ```
-
-```{python}
-## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
-survey_df_industry = survey_df[~survey_df['industry_name'].isin(['Construction',
-                              'Mining',
-                              'Other services',
-                              'Agriculture, forestry, fishing, and hunting',
-                              'Armed Forces'])]
-survey_df_industry = survey_df_industry[survey_df_industry['employment_status_description']!="not in labor force"]
-## Factorize the industry_name column to get numerical indices and names
-industry_idx, industry_names = survey_df_industry['industry_name'].factorize()
-survey_df_industry['industry_idx'] = industry_idx
-## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)
-survey_df_industry['unemployment_status'] = survey_df_industry['employment_status_description'].map({'employed': 0, 'unemployed': 1})
-
-## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)
-df_industry_monthly_ur = df_industry[~df_industry['Industry'].isin(['construction',
-                              'mining_quarrying_and_oil_and_gas_ extraction',
-                              'other_services',
-                              'agricultural',
-                              'self_employed',
-                              'non_durable_goods',
-                              'durable_goods'])]
-
-ur_by_industry = pd.DataFrame(df_industry_monthly_ur.groupby('Industry', as_index=False).agg(
-    mean_ur = ('Unemployment_rate','mean'),
-    sd_ur = ('Unemployment_rate', 'std')
-))
- # modify the industry name column to align with industry_names
-ur_by_industry['Industry']=['Educational and health services',
-                            'Financial activities',
-                            'Public administration',
-                            'Information',
-                            'Leisure and hospitality',
-                            'Manufacturing',
-                            'Professional and business services',
-                            'Transportation and utilities',
-                            'Wholesale and retail trade']
-# Logit transformation function
-def logit(p):
-    return np.log(p / (1 - p))
-ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
-ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
-
-## 3. Define the Adaptive pooling PyMC model
-# priors
-ur_by_industry_copy = ur_by_industry.copy()
-ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
-prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
-prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
-# Define the PGM model
-coords = {"industry": industry_names}
-with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
-    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
-    # Global Priors 
-    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
-    # Industry-Specific Parameters - observed industry means
-    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
-    alpha_industry = pm.Normal("alpha_industry", 
-                                mu=mu_alpha_industry, # historical industry means
-                                sigma=sigma,
-                                dims="industry")
-    # Probability of unemployment of each industry determined by alpha_industry
-    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
-    # Observed data - unemployment status
-    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
-                                            p=p_unemployment, 
-                                            observed=survey_df_industry['unemployment_status'].values,
-                                            dims="obs_id")
-```
-
-```{python}
-## 4.Visualize the PGM
-diplay(pm.model_to_graphviz(adaptive_unemployment_industry_model))
-```
-
-```{python}
-#| label: tbl-industry-trace-summary
-#| tbl-cap: "Summary of Posterior Distributions"
-#| tbl-col: true
-#| tbl-center: true
-## 5.MCMC sampling and prediction
-with adaptive_unemployment_industry_model:
-    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
-# Pring summary of the trace
-trace_alpha_summary = az.summary(
-    ur_industry_trace,
-    var_names=['alpha_industry'],
-    kind="stats", 
-    round_to=2
-)
-trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
-trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
-trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
-display(trace_alpha_summary)
-```
-The provided trace summary @tbl-industry-trace-summary details the posterior estimates for the alpha_industry parameters, which represent the estimated industry-specific parameters for unemployment probability. For example, 'Leisure and hospitality' has a mean of 0.056, while 'Public administration' has a mean of 0.018. The sd, hdi_3% and hdi_97% are consistently quite narrow across all industries, (e.g., 'Leisure and hospitality' from 0.055 to 0.059, a range of 0.004). This indicates a strong concentration of posterior probability around the mean estimates.
 
 ```{python}
 #| label: fig-industry-pgm-scatter
@@ -1145,6 +1143,30 @@ plt.tight_layout()
 plt.show()
 ```
 
+The PGM estimated unemployment rates graphed in @fig-industry-pgm-scatter reveals distinct causal influences of industry type on unemployment probability. The model infers that the 'Leisure and Hospitality' industry has the highest positive causal effect on unemployment likelihood. Conversely, 'Public Administration' and 'Financial Services' show a negative causal influence, resulting in lower estimated unemployment rates. The 'Information' industry, while having the second-highest mean unemployment, exhibits the widest credible interval, indicating greater uncertainty in quantifying its causal impact on employment stability.
+
+```python
+# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
+trace_industries= ['Leisure and hospitality',
+              'Financial activities',
+              'Public administration',
+              'Information']
+## create subset of the trace summary with the selected industries alpha transformed to probabilities
+alpha_industry_subset = 1 / (1 + np.exp(-ur_industry_trace.posterior['alpha_industry'].sel(industry=trace_industries)))
+import xarray as xr
+trace_for_plot = az.InferenceData(
+    posterior=xr.Dataset(
+        data_vars={
+            'sigma': ur_industry_trace.posterior['sigma'],
+            'alpha_industry': alpha_industry_subset
+        }
+    )
+)
+az.plot_trace(trace_for_plot)
+plt.tight_layout()
+plt.show()
+```
+
 ```{python}
 # Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
 trace_industries= ['Leisure and hospitality',
@@ -1166,8 +1188,6 @@ az.plot_trace(trace_for_plot)
 plt.tight_layout()
 plt.show()
 ```
-The PGM estimated unemployment rates graphed in @fig-industry-pgm-scatter reveals distinct causal influences of industry type on unemployment probability. The model infers that the 'Leisure and Hospitality' industry has the highest positive causal effect on unemployment likelihood. Conversely, 'Public Administration' and 'Financial Services' show a negative causal influence, resulting in lower estimated unemployment rates. The 'Information' industry, while having the second-highest mean unemployment, exhibits the widest credible interval, indicating greater uncertainty in quantifying its causal impact on employment stability.
-
 
 ## References {.unnumbered}
 
