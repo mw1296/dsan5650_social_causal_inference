@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mengjia Wei">
+<meta name="dcterms.date" content="2025-08-04">
+<meta name="keywords" content="PGM, Unemployment Rate, Unemployment Durations, Causal Inference">
+
+<title>Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate and durations</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-8a894fcc3cb5e37eb5bf30def131be2f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script async="" src="https://hypothes.is/embed.js"></script>
+<script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+<script src="https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta name="citation_title" content="Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate and durations">
+<meta name="citation_abstract" content="In its revised report released on July 31, 2025, the U.S. Bureau of Labor Statistics (BLS) reported a sharp slowdown in job creation beginning in May, signaling heightened uncertainty and growing concerns about the overall health of the U.S. labor market. This study investigates the causal relationships between race, industry and unemployment rates in the United States, applying&nbsp;probabilistic graphical modeling (PGM)&nbsp;to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: group attributes (race and industry) and time (2024 vs. 2025). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates across 2024 and 2025. This study first examined the race effect on the unemployment rate disparitu. The industry-specific unemployment rate dynamics focuses on [retail] [] and [Leisure and hospitality] sectors. This analysis seeks to identify whether certain groups—such as Black labor force and [Retail Industry]—face higher or lower unemployment, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that [conclusion1]. Additionally, the [retail], [], and [technology] industries experienced increased unemployment rates between the year of 2015 and the year of 2025, with respective changes of&nbsp;[ ],&nbsp;[ ], and&nbsp;[ ]&nbsp;percentage points. The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among Black workers&nbsp;and the&nbsp;[retail and hospitality]&nbsp;sectors. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.
+">
+<meta name="citation_keywords" content="PGM,Unemployment Rate,Unemployment Durations,Causal Inference">
+<meta name="citation_author" content="Mengjia Wei">
+<meta name="citation_publication_date" content="2025-08-04">
+<meta name="citation_cover_date" content="2025-08-04">
+<meta name="citation_year" content="2025">
+<meta name="citation_online_date" content="2025-08-04">
+<meta name="citation_language" content="en">
+<meta name="citation_journal_title" content="Georgetown Univeristy DSAN 5650 Journal">
+<meta name="citation_reference" content="citation_title=Strategies for the development of volcanic hazard maps in monogenetic volcanic fields: The example of La Palma (Canary Islands);,citation_author=José Marrero;,citation_author=Alicia García;,citation_author=Manuel Berrocoso;,citation_author=Ángeles Llinares;,citation_author=Antonio Rodríguez-Losada;,citation_author=R. Ortiz;,citation_publication_date=2019-07;,citation_cover_date=2019-07;,citation_year=2019;,citation_doi=10.1186/s13617-019-0085-5;,citation_volume=8;,citation_journal_title=Journal of Applied Volcanology;">
+<meta name="citation_reference" content="citation_title=Understanding black-white disparities in labor market outcomes requires models that account for persistent discrimination and unequal bargaining power;,citation_author=Valerie Wilson;,citation_author=William Darity-Jr.;,citation_publication_date=2022-03;,citation_cover_date=2022-03;,citation_year=2022;,citation_journal_title=Economic Policy Institute;">
+<meta name="citation_reference" content="citation_title=Gender differences in unemployment trends: Race, jobs and the economy update for february 2024;,citation_author=Estee Smith Joseph Dean;,citation_publication_date=2024-03;,citation_cover_date=2024-03;,citation_year=2024;,citation_journal_title=NCRC;">
+<meta name="citation_reference" content="citation_title=US UNEMPLOYMENT RATE BY INDUSTRY (2024);,citation_publication_date=2024;,citation_cover_date=2024;,citation_year=2024;,citation_journal_title=Oberlo;">
+<meta name="citation_reference" content="citation_title=Degrees at risk: 10 US college majors with the highest unemployment rate in 2025;,citation_author=undefined TOIEducation;,citation_publication_date=2025-07;,citation_cover_date=2025-07;,citation_year=2025;,citation_journal_title=The Times Of India;">
+<meta name="citation_reference" content="citation_title=Unemployment by industry: Duration must be considered, too;,citation_author=Paul Morris YiLi Chien;,citation_publication_date=2016-01;,citation_cover_date=2016-01;,citation_year=2016;,citation_journal_title=Federal Reserve Bank of St.Lois - Regional Economist;">
+</head>
+
+<body class="quarto-light">
+
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate and durations</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+            <div class="quarto-title-meta-author">
+          <div class="quarto-title-meta-heading">Author</div>
+          <div class="quarto-title-meta-heading">Affiliation</div>
+          
+                <div class="quarto-title-meta-contents">
+            <p class="author">Mengjia Wei <a href="mailto:mw1296@georgetown.edu" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Georgetown University
+                      </p>
+                  </div>
+                    </div>
+        
+        <div class="quarto-title-meta">
+
+                      
+                <div>
+            <div class="quarto-title-meta-heading">Published</div>
+            <div class="quarto-title-meta-contents">
+              <p class="date">August 4, 2025</p>
+            </div>
+          </div>
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      <div class="quarto-alternate-formats"><div class="quarto-title-meta-heading">Other Formats</div><div class="quarto-title-meta-contents"><p><a href="index.docx"><i class="bi bi-file-word"></i>MS Word</a></p></div><div class="quarto-title-meta-contents"><p><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF (agu)</a></p></div><div class="quarto-title-meta-contents"><p><a href="index-meca.zip" data-meca-link="true"><i class="bi bi-archive"></i>MECA Bundle</a></p></div></div></div>
+    </div>
+
+    <div>
+      <div class="abstract">
+        <div class="block-title">Abstract</div>
+        <p>In its revised report released on July 31, 2025, the U.S. Bureau of Labor Statistics (BLS) reported a sharp slowdown in job creation beginning in May, signaling heightened uncertainty and growing concerns about the overall health of the U.S. labor market. This study investigates the causal relationships between race, industry and unemployment rates in the United States, applying&nbsp;probabilistic graphical modeling (PGM)&nbsp;to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we extend this approach to labor market data by constructing conditional dependence networks across two key dimensions: group attributes (race and industry) and time (2024 vs.&nbsp;2025). Specifically, the study examines recent college graduates (ages 22–24) relative to older individuals (25+), comparing their unemployment rates across 2024 and 2025. This study first examined the race effect on the unemployment rate disparitu. The industry-specific unemployment rate dynamics focuses on [retail] [] and [Leisure and hospitality] sectors. This analysis seeks to identify whether certain groups—such as Black labor force and [Retail Industry]—face higher or lower unemployment, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on labor force aggregated data from BLS CPS datasets. The results indicate that [conclusion1]. Additionally, the [retail], [], and [technology] industries experienced increased unemployment rates between the year of 2015 and the year of 2025, with respective changes of&nbsp;[ ],&nbsp;[ ], and&nbsp;[ ]&nbsp;percentage points. The PGM framework reveals significant interactive effects between race and industry on unemployment, particularly among Black workers&nbsp;and the&nbsp;[retail and hospitality]&nbsp;sectors. These findings contribute to the growing literature that leverages PGMs for social inference (e.g., Li et al., 2022), highlighting the model’s potential for uncovering structural labor inequalities over time and across population subgroups.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="keywords">
+        <div class="block-title">Keywords</div>
+        <p>PGM, Unemployment Rate, Unemployment Durations, Causal Inference</p>
+      </div>
+    </div>
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data"><span class="header-section-number">2</span> Data</a></li>
+  <li><a href="#eda" id="toc-eda" class="nav-link" data-scroll-target="#eda"><span class="header-section-number">3</span> EDA</a>
+  <ul class="collapse">
+  <li><a href="#unemployment-rates-of-differenet-races" id="toc-unemployment-rates-of-differenet-races" class="nav-link" data-scroll-target="#unemployment-rates-of-differenet-races"><span class="header-section-number">3.1</span> Unemployment Rates of Differenet Races</a></li>
+  <li><a href="#unemployment-rates-of-differenet-industries" id="toc-unemployment-rates-of-differenet-industries" class="nav-link" data-scroll-target="#unemployment-rates-of-differenet-industries"><span class="header-section-number">3.2</span> Unemployment Rates of Differenet Industries</a></li>
+  </ul></li>
+  <li><a href="#pgm" id="toc-pgm" class="nav-link" data-scroll-target="#pgm"><span class="header-section-number">4</span> PGM</a>
+  <ul class="collapse">
+  <li><a href="#baseline-unemployment-rate-distribution" id="toc-baseline-unemployment-rate-distribution" class="nav-link" data-scroll-target="#baseline-unemployment-rate-distribution"><span class="header-section-number">4.1</span> Baseline unemployment rate distribution</a></li>
+  <li><a href="#define-the-prior-means-for-overall-population" id="toc-define-the-prior-means-for-overall-population" class="nav-link" data-scroll-target="#define-the-prior-means-for-overall-population"><span class="header-section-number">4.2</span> Define the prior means for overall population</a></li>
+  <li><a href="#define-the-prior-means-by-races" id="toc-define-the-prior-means-by-races" class="nav-link" data-scroll-target="#define-the-prior-means-by-races"><span class="header-section-number">4.3</span> Define the prior means by races</a></li>
+  <li><a href="#define-the-unemployment-race-pymc" id="toc-define-the-unemployment-race-pymc" class="nav-link" data-scroll-target="#define-the-unemployment-race-pymc"><span class="header-section-number">4.4</span> Define the unemployment-race PyMC</a></li>
+  <li><a href="#graph-the-unemployment-race-pgm" id="toc-graph-the-unemployment-race-pgm" class="nav-link" data-scroll-target="#graph-the-unemployment-race-pgm"><span class="header-section-number">4.5</span> Graph the unemployment-race PGM</a></li>
+  <li><a href="#fit-the-unemployment-race-model---perform-mcmc-sampling" id="toc-fit-the-unemployment-race-model---perform-mcmc-sampling" class="nav-link" data-scroll-target="#fit-the-unemployment-race-model---perform-mcmc-sampling"><span class="header-section-number">4.6</span> Fit the unemployment-race Model - Perform MCMC Sampling</a></li>
+  <li><a href="#analyze-unemployment-race-results-and-visualize" id="toc-analyze-unemployment-race-results-and-visualize" class="nav-link" data-scroll-target="#analyze-unemployment-race-results-and-visualize"><span class="header-section-number">4.7</span> Analyze unemployment-race Results and Visualize</a></li>
+  <li><a href="#pgm-for-unemployment-industry" id="toc-pgm-for-unemployment-industry" class="nav-link" data-scroll-target="#pgm-for-unemployment-industry"><span class="header-section-number">4.8</span> PGM for unemployment-industry</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="index-preview.html"><i class="bi bi-journal-code"></i>Article Notebook</a></li></ul></div></nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+  
+
+
+<section id="introduction" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">1</span> Introduction</h2>
+<p>The interplay of demographic characteristics and labor market dynamics consistently reveals significant disparities in unemployment rates. Decades of research reveal a persistent relationship between race, gender, and unemployment, evident across diverse economic cycles. Though the Black unemployment rate fell to a historic low of 6.1% in 2019, it was still twice as high as the White unemployment rate of 3.0%, as <span class="citation" data-cites="ValerieWilson2022">Wilson and Darity-Jr. (<a href="#ref-ValerieWilson2022" role="doc-biblioref">2022</a>)</span> observed. These disparities are further magnified at the intersection of race and gender. For instance, Black men faced a 6.1% unemployment rate in February 2024, notably higher than Black women at 4.4%. Similarly, Hispanic women’s unemployment rate increased to 5.0% in February 2024, while Hispanic men experienced a decrease to 4.0% (<span class="citation" data-cites="Joseph2024">Joseph Dean (<a href="#ref-Joseph2024" role="doc-biblioref">2024</a>)</span>). Native American men also experienced higher unemployment (10%) than Native American women (7%) in 2022. Industry-specific analyses similarly highlight divergent unemployment trends. The Leisure and Hospitality sector reported the highest unemployment rate at 6.0% in 2024, an increase from 5.5% in 2023. Similarly, Wholesale and Retail Trade experienced elevated unemployment, reaching 4.7% in October 2024, up from 4.0% in 2023. Conversely, Financial Activities maintained a significantly lower unemployment rate of 1.9% (<span class="citation" data-cites="Oberlo2024"><span>“US UNEMPLOYMENT RATE BY INDUSTRY (2024)”</span> (<a href="#ref-Oberlo2024" role="doc-biblioref">2024</a>)</span>).</p>
+<p>Research from the U.S. Bureau of Labor Statistics consistently shows longer unemployment spells in sectors such as Manufacturing and Construction, while industries demanding specialized skills like Education and Health Services exhibit shorter durations. Study by <span class="citation" data-cites="YiLiChienandPaulMorris">YiLi Chien (<a href="#ref-YiLiChienandPaulMorris" role="doc-biblioref">2016</a>)</span> reveals negative correlation between the unemployment rate and duration. Such variations in both the rate and duration of unemployment underscore complex interactions among race, gender, age, and industry.</p>
+<p><span class="citation" data-cites="TOIEducation2025">TOIEducation (<a href="#ref-TOIEducation2025" role="doc-biblioref">2025</a>)</span> published that the labor market for recent college graduates has “deteriorated noticeably” in the first quarter of 2025. The unemployment rate for this cohort (ages 22-27) ranged from 5.5% to 7.1%, exceeding the overall national average of 4.1-4.2%, with Anthropology (9.4%), Physics (7.8%), and Computer Engineering (7.5%) showing among the highest rates.</p>
+<div id="fig-graduates" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-graduates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/unemployment_rate_recent_graduate.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Unemployment Rate of Recent College Graduates"><img src="images/unemployment_rate_recent_graduate.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-graduates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Unemployment Rate of Recent College Graduates
+</figcaption>
+</figure>
+</div>
+<p>Although the Federal Open Market Committee (FOMC) reported a low overall unemployment rate for June 2025 (Based on the U.S. Bureau of Labor Statistics (BLS) revised job creation data released on July 31, 2025, a marked decline in job creation has been observed beginning in May, raising substantial concerns regarding the stability of the U.S. labor market.), recent data clearly indicate a noticeable uptick in the unemployment rate for the 22-27 age group since March, reaching 2021 levels and particularly affecting recent college graduates (<a href="#fig-graduates" class="quarto-xref">Figure&nbsp;1</a>).</p>
+</section>
+<section id="data" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="data"><span class="header-section-number">2</span> Data</h2>
+<div class="cell" data-tbl-center="true" data-tbl-col="true" data-execution_count="2">
+<div id="tbl-monthly-unemployment-rate-race" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="2" data-tbl-center="true" data-tbl-col="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-monthly-unemployment-rate-race-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: BLS 2015-2025 Monthly Unemployment Rate By Race
+</figcaption>
+<div aria-describedby="tbl-monthly-unemployment-rate-race-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_b12f0" class="do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_b12f0_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Year</th>
+<th id="T_b12f0_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Month</th>
+<th id="T_b12f0_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">Unemployment_rate</th>
+<th id="T_b12f0_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">Race</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_b12f0_row0_col0" class="data row0 col0">2015</td>
+<td id="T_b12f0_row0_col1" class="data row0 col1">Jan</td>
+<td id="T_b12f0_row0_col2" class="data row0 col2">5.30</td>
+<td id="T_b12f0_row0_col3" class="data row0 col3">white</td>
+</tr>
+<tr class="even">
+<td id="T_b12f0_row1_col0" class="data row1 col0">2016</td>
+<td id="T_b12f0_row1_col1" class="data row1 col1">Jan</td>
+<td id="T_b12f0_row1_col2" class="data row1 col2">4.70</td>
+<td id="T_b12f0_row1_col3" class="data row1 col3">white</td>
+</tr>
+<tr class="odd">
+<td id="T_b12f0_row2_col0" class="data row2 col0">2017</td>
+<td id="T_b12f0_row2_col1" class="data row2 col1">Jan</td>
+<td id="T_b12f0_row2_col2" class="data row2 col2">4.70</td>
+<td id="T_b12f0_row2_col3" class="data row2 col3">white</td>
+</tr>
+<tr class="even">
+<td id="T_b12f0_row3_col0" class="data row3 col0">2018</td>
+<td id="T_b12f0_row3_col1" class="data row3 col1">Jan</td>
+<td id="T_b12f0_row3_col2" class="data row3 col2">3.90</td>
+<td id="T_b12f0_row3_col3" class="data row3 col3">white</td>
+</tr>
+<tr class="odd">
+<td id="T_b12f0_row4_col0" class="data row4 col0">2019</td>
+<td id="T_b12f0_row4_col1" class="data row4 col1">Jan</td>
+<td id="T_b12f0_row4_col2" class="data row4 col2">4.00</td>
+<td id="T_b12f0_row4_col3" class="data row4 col3">white</td>
+</tr>
+<tr class="even">
+<td id="T_b12f0_row5_col0" class="data row5 col0">2020</td>
+<td id="T_b12f0_row5_col1" class="data row5 col1">Jan</td>
+<td id="T_b12f0_row5_col2" class="data row5 col2">3.50</td>
+<td id="T_b12f0_row5_col3" class="data row5 col3">white</td>
+</tr>
+<tr class="odd">
+<td id="T_b12f0_row6_col0" class="data row6 col0">2021</td>
+<td id="T_b12f0_row6_col1" class="data row6 col1">Jan</td>
+<td id="T_b12f0_row6_col2" class="data row6 col2">6.20</td>
+<td id="T_b12f0_row6_col3" class="data row6 col3">white</td>
+</tr>
+<tr class="even">
+<td id="T_b12f0_row7_col0" class="data row7 col0">2022</td>
+<td id="T_b12f0_row7_col1" class="data row7 col1">Jan</td>
+<td id="T_b12f0_row7_col2" class="data row7 col2">3.90</td>
+<td id="T_b12f0_row7_col3" class="data row7 col3">white</td>
+</tr>
+<tr class="odd">
+<td id="T_b12f0_row8_col0" class="data row8 col0">2023</td>
+<td id="T_b12f0_row8_col1" class="data row8 col1">Jan</td>
+<td id="T_b12f0_row8_col2" class="data row8 col2">3.50</td>
+<td id="T_b12f0_row8_col3" class="data row8 col3">white</td>
+</tr>
+<tr class="even">
+<td id="T_b12f0_row9_col0" class="data row9 col0">2024</td>
+<td id="T_b12f0_row9_col1" class="data row9 col1">Jan</td>
+<td id="T_b12f0_row9_col2" class="data row9 col2">3.80</td>
+<td id="T_b12f0_row9_col3" class="data row9 col3">white</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+<a class="quarto-notebook-link" id="nblink-1" href="index-preview.html">Source: Article Notebook</a></div>
+<p>Data from the U.S. Bureau of Labor Statistics (BLS) 2015 to 2025 monthly aggregated unemployment rate by races. This dataset is used to analyze the race effect on unemployment along with the monthly unemployment rate aggregated data by race (<a href="#tbl-monthly-unemployment-rate-race" class="quarto-xref">Table&nbsp;1</a>).</p>
+<div class="cell" data-tbl-center="true" data-tbl-col="true" data-execution_count="4">
+<div id="tbl-survey-data-jun2025" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="4" data-tbl-center="true" data-tbl-col="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-survey-data-jun2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: BLS June 2025 Labor Force Survey Data
+</figcaption>
+<div aria-describedby="tbl-survey-data-jun2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_f6786" class="do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_f6786_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">sex_name</th>
+<th id="T_f6786_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">race_name</th>
+<th id="T_f6786_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">education_attainment_name</th>
+<th id="T_f6786_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">employment_status_name</th>
+<th id="T_f6786_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">industry_name</th>
+<th id="T_f6786_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">is_black_african</th>
+<th id="T_f6786_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">is_asian</th>
+<th id="T_f6786_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">is_white</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_f6786_row0_col0" class="data row0 col0">male</td>
+<td id="T_f6786_row0_col1" class="data row0 col1">white</td>
+<td id="T_f6786_row0_col2" class="data row0 col2">bachelors_degree</td>
+<td id="T_f6786_row0_col3" class="data row0 col3">employed</td>
+<td id="T_f6786_row0_col4" class="data row0 col4">Construction</td>
+<td id="T_f6786_row0_col5" class="data row0 col5">0</td>
+<td id="T_f6786_row0_col6" class="data row0 col6">0</td>
+<td id="T_f6786_row0_col7" class="data row0 col7">1</td>
+</tr>
+<tr class="even">
+<td id="T_f6786_row1_col0" class="data row1 col0">male</td>
+<td id="T_f6786_row1_col1" class="data row1 col1">white</td>
+<td id="T_f6786_row1_col2" class="data row1 col2">high_school</td>
+<td id="T_f6786_row1_col3" class="data row1 col3">employed</td>
+<td id="T_f6786_row1_col4" class="data row1 col4">Construction</td>
+<td id="T_f6786_row1_col5" class="data row1 col5">0</td>
+<td id="T_f6786_row1_col6" class="data row1 col6">0</td>
+<td id="T_f6786_row1_col7" class="data row1 col7">1</td>
+</tr>
+<tr class="odd">
+<td id="T_f6786_row2_col0" class="data row2 col0">female</td>
+<td id="T_f6786_row2_col1" class="data row2 col1">white</td>
+<td id="T_f6786_row2_col2" class="data row2 col2">bachelors_degree</td>
+<td id="T_f6786_row2_col3" class="data row2 col3">employed</td>
+<td id="T_f6786_row2_col4" class="data row2 col4">Manufacturing</td>
+<td id="T_f6786_row2_col5" class="data row2 col5">0</td>
+<td id="T_f6786_row2_col6" class="data row2 col6">0</td>
+<td id="T_f6786_row2_col7" class="data row2 col7">1</td>
+</tr>
+<tr class="even">
+<td id="T_f6786_row3_col0" class="data row3 col0">male</td>
+<td id="T_f6786_row3_col1" class="data row3 col1">white</td>
+<td id="T_f6786_row3_col2" class="data row3 col2">bachelors_degree</td>
+<td id="T_f6786_row3_col3" class="data row3 col3">employed</td>
+<td id="T_f6786_row3_col4" class="data row3 col4">Manufacturing</td>
+<td id="T_f6786_row3_col5" class="data row3 col5">0</td>
+<td id="T_f6786_row3_col6" class="data row3 col6">0</td>
+<td id="T_f6786_row3_col7" class="data row3 col7">1</td>
+</tr>
+<tr class="odd">
+<td id="T_f6786_row4_col0" class="data row4 col0">female</td>
+<td id="T_f6786_row4_col1" class="data row4 col1">white</td>
+<td id="T_f6786_row4_col2" class="data row4 col2">masters_degree</td>
+<td id="T_f6786_row4_col3" class="data row4 col3">employed</td>
+<td id="T_f6786_row4_col4" class="data row4 col4">Transportation and utilities</td>
+<td id="T_f6786_row4_col5" class="data row4 col5">0</td>
+<td id="T_f6786_row4_col6" class="data row4 col6">0</td>
+<td id="T_f6786_row4_col7" class="data row4 col7">1</td>
+</tr>
+<tr class="even">
+<td id="T_f6786_row5_col0" class="data row5 col0">female</td>
+<td id="T_f6786_row5_col1" class="data row5 col1">white</td>
+<td id="T_f6786_row5_col2" class="data row5 col2">bachelors_degree</td>
+<td id="T_f6786_row5_col3" class="data row5 col3">employed</td>
+<td id="T_f6786_row5_col4" class="data row5 col4">Construction</td>
+<td id="T_f6786_row5_col5" class="data row5 col5">0</td>
+<td id="T_f6786_row5_col6" class="data row5 col6">0</td>
+<td id="T_f6786_row5_col7" class="data row5 col7">1</td>
+</tr>
+<tr class="odd">
+<td id="T_f6786_row6_col0" class="data row6 col0">male</td>
+<td id="T_f6786_row6_col1" class="data row6 col1">white</td>
+<td id="T_f6786_row6_col2" class="data row6 col2">high_school</td>
+<td id="T_f6786_row6_col3" class="data row6 col3">employed</td>
+<td id="T_f6786_row6_col4" class="data row6 col4">Wholesale and retail trade</td>
+<td id="T_f6786_row6_col5" class="data row6 col5">0</td>
+<td id="T_f6786_row6_col6" class="data row6 col6">0</td>
+<td id="T_f6786_row6_col7" class="data row6 col7">1</td>
+</tr>
+<tr class="even">
+<td id="T_f6786_row7_col0" class="data row7 col0">female</td>
+<td id="T_f6786_row7_col1" class="data row7 col1">white</td>
+<td id="T_f6786_row7_col2" class="data row7 col2">bachelors_degree</td>
+<td id="T_f6786_row7_col3" class="data row7 col3">employed</td>
+<td id="T_f6786_row7_col4" class="data row7 col4">Professional and business services</td>
+<td id="T_f6786_row7_col5" class="data row7 col5">0</td>
+<td id="T_f6786_row7_col6" class="data row7 col6">0</td>
+<td id="T_f6786_row7_col7" class="data row7 col7">1</td>
+</tr>
+<tr class="odd">
+<td id="T_f6786_row8_col0" class="data row8 col0">male</td>
+<td id="T_f6786_row8_col1" class="data row8 col1">white</td>
+<td id="T_f6786_row8_col2" class="data row8 col2">less_than_high_school</td>
+<td id="T_f6786_row8_col3" class="data row8 col3">employed</td>
+<td id="T_f6786_row8_col4" class="data row8 col4">Professional and business services</td>
+<td id="T_f6786_row8_col5" class="data row8 col5">0</td>
+<td id="T_f6786_row8_col6" class="data row8 col6">0</td>
+<td id="T_f6786_row8_col7" class="data row8 col7">1</td>
+</tr>
+<tr class="even">
+<td id="T_f6786_row9_col0" class="data row9 col0">female</td>
+<td id="T_f6786_row9_col1" class="data row9 col1">white</td>
+<td id="T_f6786_row9_col2" class="data row9 col2">high_school</td>
+<td id="T_f6786_row9_col3" class="data row9 col3">employed</td>
+<td id="T_f6786_row9_col4" class="data row9 col4">Educational and health services</td>
+<td id="T_f6786_row9_col5" class="data row9 col5">0</td>
+<td id="T_f6786_row9_col6" class="data row9 col6">0</td>
+<td id="T_f6786_row9_col7" class="data row9 col7">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (<a href="#tbl-survey-data-jun2025" class="quarto-xref">Table&nbsp;2</a>). This dataset is used to sample and predict employment status using the observations in the survey data.</p>
+<div class="cell" data-tbl-center="true" data-tbl-col="true" data-execution_count="5">
+<div id="tbl-survey-data-2024-2025" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="5" data-tbl-center="true" data-tbl-col="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-survey-data-2024-2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: BLS 2024 - 2025 Jan - Jul Labor Force Survey Data
+</figcaption>
+<div aria-describedby="tbl-survey-data-2024-2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_c00f4" class="do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_c00f4_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">industry</th>
+<th id="T_c00f4_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">employment_status</th>
+<th id="T_c00f4_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">month_year</th>
+<th id="T_c00f4_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">industry_name</th>
+<th id="T_c00f4_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">employment_status_description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_c00f4_row0_col0" class="data row0 col0">11</td>
+<td id="T_c00f4_row0_col1" class="data row0 col1">1</td>
+<td id="T_c00f4_row0_col2" class="data row0 col2">jan_2024</td>
+<td id="T_c00f4_row0_col3" class="data row0 col3">Leisure and hospitality</td>
+<td id="T_c00f4_row0_col4" class="data row0 col4">employed</td>
+</tr>
+<tr class="even">
+<td id="T_c00f4_row1_col0" class="data row1 col0">11</td>
+<td id="T_c00f4_row1_col1" class="data row1 col1">1</td>
+<td id="T_c00f4_row1_col2" class="data row1 col2">jan_2024</td>
+<td id="T_c00f4_row1_col3" class="data row1 col3">Leisure and hospitality</td>
+<td id="T_c00f4_row1_col4" class="data row1 col4">employed</td>
+</tr>
+<tr class="odd">
+<td id="T_c00f4_row2_col0" class="data row2 col0">10</td>
+<td id="T_c00f4_row2_col1" class="data row2 col1">1</td>
+<td id="T_c00f4_row2_col2" class="data row2 col2">jan_2024</td>
+<td id="T_c00f4_row2_col3" class="data row2 col3">Educational and health services</td>
+<td id="T_c00f4_row2_col4" class="data row2 col4">employed</td>
+</tr>
+<tr class="even">
+<td id="T_c00f4_row3_col0" class="data row3 col0">5</td>
+<td id="T_c00f4_row3_col1" class="data row3 col1">1</td>
+<td id="T_c00f4_row3_col2" class="data row3 col2">jan_2024</td>
+<td id="T_c00f4_row3_col3" class="data row3 col3">Wholesale and retail trade</td>
+<td id="T_c00f4_row3_col4" class="data row3 col4">employed</td>
+</tr>
+<tr class="odd">
+<td id="T_c00f4_row4_col0" class="data row4 col0">4</td>
+<td id="T_c00f4_row4_col1" class="data row4 col1">4</td>
+<td id="T_c00f4_row4_col2" class="data row4 col2">jan_2024</td>
+<td id="T_c00f4_row4_col3" class="data row4 col3">Manufacturing</td>
+<td id="T_c00f4_row4_col4" class="data row4 col4">unemployed</td>
+</tr>
+<tr class="even">
+<td id="T_c00f4_row5_col0" class="data row5 col0">8</td>
+<td id="T_c00f4_row5_col1" class="data row5 col1">1</td>
+<td id="T_c00f4_row5_col2" class="data row5 col2">jan_2024</td>
+<td id="T_c00f4_row5_col3" class="data row5 col3">Financial activities</td>
+<td id="T_c00f4_row5_col4" class="data row5 col4">employed</td>
+</tr>
+<tr class="odd">
+<td id="T_c00f4_row6_col0" class="data row6 col0">9</td>
+<td id="T_c00f4_row6_col1" class="data row6 col1">1</td>
+<td id="T_c00f4_row6_col2" class="data row6 col2">jan_2024</td>
+<td id="T_c00f4_row6_col3" class="data row6 col3">Professional and business services</td>
+<td id="T_c00f4_row6_col4" class="data row6 col4">employed</td>
+</tr>
+<tr class="even">
+<td id="T_c00f4_row7_col0" class="data row7 col0">5</td>
+<td id="T_c00f4_row7_col1" class="data row7 col1">1</td>
+<td id="T_c00f4_row7_col2" class="data row7 col2">jan_2024</td>
+<td id="T_c00f4_row7_col3" class="data row7 col3">Wholesale and retail trade</td>
+<td id="T_c00f4_row7_col4" class="data row7 col4">employed</td>
+</tr>
+<tr class="odd">
+<td id="T_c00f4_row8_col0" class="data row8 col0">4</td>
+<td id="T_c00f4_row8_col1" class="data row8 col1">1</td>
+<td id="T_c00f4_row8_col2" class="data row8 col2">jan_2024</td>
+<td id="T_c00f4_row8_col3" class="data row8 col3">Manufacturing</td>
+<td id="T_c00f4_row8_col4" class="data row8 col4">employed</td>
+</tr>
+<tr class="even">
+<td id="T_c00f4_row9_col0" class="data row9 col0">4</td>
+<td id="T_c00f4_row9_col1" class="data row9 col1">1</td>
+<td id="T_c00f4_row9_col2" class="data row9 col2">jan_2024</td>
+<td id="T_c00f4_row9_col3" class="data row9 col3">Manufacturing</td>
+<td id="T_c00f4_row9_col4" class="data row9 col4">employed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Data from the U.S. Bureau of Labor Statistics (BLS) historical monthly labor force survey provide individual-level employment status by industries. For the purpose of this study, we utilized 2024 Jan to Jul and 2025 Jan to Jun data. (<a href="#tbl-survey-data-2024-2025" class="quarto-xref">Table&nbsp;3</a>). This dataset is used to analyze the industry effect on unemployment rate in the recent 2 years.</p>
+</section>
+<section id="eda" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="eda"><span class="header-section-number">3</span> EDA</h2>
+<section id="unemployment-rates-of-differenet-races" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="unemployment-rates-of-differenet-races"><span class="header-section-number">3.1</span> Unemployment Rates of Differenet Races</h3>
+<div id="924ab26d" class="cell" data-execution_count="6">
+<div class="cell-output cell-output-stdout">
+<pre><code>Unemployment Rate Distribution Histograms By Race</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-7-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="index_files/figure-html/cell-7-output-2.png" width="1526" height="494" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unemployment Rate Distribution Histograms By Sex</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-7-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="index_files/figure-html/cell-7-output-4.png" width="1525" height="494" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unemployment Rate Distribution Histograms By Industry</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-7-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="index_files/figure-html/cell-7-output-6.png" width="1526" height="2453" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unemployment Rate Distribution Histograms By Age</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-7-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="index_files/figure-html/cell-7-output-8.png" width="1526" height="984" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-histogram-unemployment-rate-demographics" class="cell" data-execution_count="7">
+<div class="cell-output cell-output-stdout">
+<pre><code>Unemployment Rate Distribution Histograms By Education_attainment</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-histogram-unemployment-rate-demographics" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Histogram plots of the unemployment rate distributins by Age, Sex, Race, Industry and Education Attainment using 2015-2025 BLS data">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-histogram-unemployment-rate-demographics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-histogram-unemployment-rate-demographics-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;2: Unemployment Rate Distributions By Demographics (2015-2025 statistics)"><img src="index_files/figure-html/fig-histogram-unemployment-rate-demographics-output-2.png" alt="Histogram plots of the unemployment rate distributins by Age, Sex, Race, Industry and Education Attainment using 2015-2025 BLS data" width="1526" height="984" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-histogram-unemployment-rate-demographics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Unemployment Rate Distributions By Demographics (2015-2025 statistics)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>BLS data from 2015–2025 indicate that the Black or African American population experienced the highest average unemployment rate (7.5%), primarily within the 5–10% range. Gender differences are minimal, with both averaging around 5%, though rates are slightly higher for men. Among industries, Leisure and Hospitality recorded the highest unemployment (10%) with a long-tail distribution, followed by Agriculture (5–11%) and moderate variability. Construction and Mining/Oil &amp; Gas exhibit similar but marginally lower patterns. The 22–24 age group stands out with significantly elevated unemployment—averaging 7% and predominantly above 5%—while other age groups display lower and more uniform rates. Financial Activities show the lowest and most stable unemployment, consistently under 5%. Individuals without a high school diploma face high and variable unemployment, averaging 7% with a long-tail skew. These patterns suggest that young adults (22–24), Black or African Americans without college degrees, and those employed in Leisure, Construction, or Mining sectors are disproportionately affected by higher unemployment. (<a href="#fig-histogram-unemployment-rate-demographics" class="quarto-xref">Figure&nbsp;2</a>).</p>
+<div id="cell-fig-histogram-unemployment-rate" class="cell" data-execution_count="8">
+<div class="cell-output cell-output-display">
+<div id="fig-histogram-unemployment-rate" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Histogram plot of the overall population unemployment rate distributions using 2015-2025 BLS data">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-histogram-unemployment-rate-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-histogram-unemployment-rate-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;3: Overall Population Unemployment Rate Distributions (2015-2025 statistics)"><img src="index_files/figure-html/fig-histogram-unemployment-rate-output-1.png" alt="Histogram plot of the overall population unemployment rate distributions using 2015-2025 BLS data" width="758" height="690" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-histogram-unemployment-rate-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Overall Population Unemployment Rate Distributions (2015-2025 statistics)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>According to BLS data from 2015–2025, the overall population unemployment rate averaged slightly above 4%, with the majority of observations concentrated between 2% and 5% and exhibiting relatively low variability (<a href="#fig-histogram-unemployment-rate" class="quarto-xref">Figure&nbsp;3</a>).</p>
+</section>
+<section id="unemployment-rates-of-differenet-industries" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="unemployment-rates-of-differenet-industries"><span class="header-section-number">3.2</span> Unemployment Rates of Differenet Industries</h3>
+<div id="cell-fig-boxplot-unemployment-rate-industry" class="cell" data-execution_count="9">
+<div class="cell-output cell-output-display">
+<div id="fig-boxplot-unemployment-rate-industry" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Boxplot of the industry unemployment rates distributions using 2015-2025 BLS data">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-boxplot-unemployment-rate-industry-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-boxplot-unemployment-rate-industry-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;4: Unemployment Rate Distributions By Industries (2015-2025 statistics)"><img src="index_files/figure-html/fig-boxplot-unemployment-rate-industry-output-1.png" alt="Boxplot of the industry unemployment rates distributions using 2015-2025 BLS data" width="1108" height="1232" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-boxplot-unemployment-rate-industry-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Unemployment Rate Distributions By Industries (2015-2025 statistics)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The boxplot illustrates notable variation in unemployment rates across industries. “Agricultural, mining/oil/gas extraction” and “Construction” industries exhibit the highest variation and upper extremes, indicating greater instability in employment. Due to the volatility and unpredictivity as a result of seasonlity, these two categories are going to be excluded from our analysis. In contrast, “Government”, “Financial services”, and “Education/health services” show consistently low and stable unemployment rates, with narrower interquartile ranges and fewer outliers. These patterns suggest structural differences in labor market vulnerability across sectors. (<a href="#fig-boxplot-unemployment-rate-industry" class="quarto-xref">Figure&nbsp;4</a>).</p>
+</section>
+</section>
+<section id="pgm" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="pgm"><span class="header-section-number">4</span> PGM</h2>
+<p>We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.</p>
+<section id="baseline-unemployment-rate-distribution" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="baseline-unemployment-rate-distribution"><span class="header-section-number">4.1</span> Baseline unemployment rate distribution</h3>
+<p>Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. (<span class="math inline">\(\sigma\)</span>, <span class="math inline">\(\text{loc}\)</span>, and <span class="math inline">\(\text{scale}\)</span>).</p>
+<div id="cell-fig-histogram-lognorm" class="cell" data-execution_count="10">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Fitted Log-Norm Distribution Parameters:
+  Shape parameter 'alpha'): 9.92
+  Location parameter (loc): 3.20
+  Scale parameter (scale): 0.03</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-histogram-lognorm" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted log-norm distribution.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-histogram-lognorm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-histogram-lognorm-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;5: Unmployment Rate Histogram vs.&nbsp;Fitted Log-Norm PDF"><img src="index_files/figure-html/fig-histogram-lognorm-output-2.png" alt="Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted log-norm distribution." width="950" height="886" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-histogram-lognorm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Unmployment Rate Histogram vs.&nbsp;Fitted Log-Norm PDF
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>By overlaying the smooth PDF curve on top of original data’s histogram, we can visualize that the Log-Normal distribution matches the distribution of the actual data. The peak of the PDF align with the peak of the histogram. The spread of the PDF roughly match the spread of the data, including the tail (<a href="#fig-histogram-lognorm" class="quarto-xref">Figure&nbsp;5</a>). Now we need to use Kolmogorov-Smirnov Test to test Goodness-of-fit with the original data and estimated parameters, then examine the p value.</p>
+<div id="d4798037" class="cell" data-execution_count="11">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Kolmogorov-Smirnov Test Results:
+  D-statistic: 0.4592
+  P-value: 0.0000</code></pre>
+</div>
+</div>
+<p>With <span class="math inline">\(p\)</span>-value &lt; 0.05, we can’t reject the hypothesis that the distribution does not come from the Log-Normal distribution, suggesting Log-Normal is not a good fit for the data. Next, explore other right-skewed distributions - Gamma distribution or the Weibull distribution.</p>
+<div id="cell-fig-histogram-gamma" class="cell" data-execution_count="12">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Fitted Gamma Distribution Parameters:
+  Shape parameter 'alpha': 0.45
+  Location parameter 'loc': 3.20
+  Scale parameter 'scale'): 1.36</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-histogram-gamma" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Gamma distribution.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-histogram-gamma-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-histogram-gamma-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;6: Unmployment Rate Histogram vs.&nbsp;Fitted Gamma PDF"><img src="index_files/figure-html/fig-histogram-gamma-output-2.png" alt="Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Gamma distribution." width="950" height="788" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-histogram-gamma-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Unmployment Rate Histogram vs.&nbsp;Fitted Gamma PDF
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Although visually the Gamma distribution matches the shape and spread of the actual data. (<a href="#fig-histogram-gamma" class="quarto-xref">Figure&nbsp;6</a>), we need to use KS Test to test Goodness-of-fit by examining the p value.</p>
+<div id="9e70c1d0" class="cell" data-execution_count="13">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Kolmogorov-Smirnov Test Results:
+  D-statistic: 0.2699
+  P-value: 0.0000</code></pre>
+</div>
+</div>
+<p>Again, with <span class="math inline">\(p\)</span>-value &lt; 0.05, we can not confidently say that the data comes from the Gamma distribution. Next, explore Weibull distribution.</p>
+<div id="cell-fig-histogram-weibull" class="cell" data-execution_count="14">
+<div class="cell-output cell-output-display">
+<div id="fig-histogram-weibull" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Weibull distribution.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-histogram-weibull-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-histogram-weibull-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;7: Unmployment Rate Histogram vs.&nbsp;Fitted Weibull PDF"><img src="index_files/figure-html/fig-histogram-weibull-output-1.png" alt="Plot the histogram of unemployment rate data and overlay the Probability Density Function (PDF) of the fitted Weibull distribution." width="950" height="788" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-histogram-weibull-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Unmployment Rate Histogram vs.&nbsp;Fitted Weibull PDF
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-tbl-center="true" data-tbl-col="true" data-execution_count="16">
+<div id="tbl-weibull-params" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="16" data-tbl-center="true" data-tbl-col="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-weibull-params-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Weibull Distribution and Fitness Statistics
+</figcaption>
+<div aria-describedby="tbl-weibull-params-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_7b07b" class="do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_7b07b_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Parameters</th>
+<th id="T_7b07b_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Values</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_7b07b_row0_col0" class="data row0 col0">Shape (c)</td>
+<td id="T_7b07b_row0_col1" class="data row0 col1">0.709400</td>
+</tr>
+<tr class="even">
+<td id="T_7b07b_row1_col0" class="data row1 col0">Location (loc)</td>
+<td id="T_7b07b_row1_col1" class="data row1 col1">3.200000</td>
+</tr>
+<tr class="odd">
+<td id="T_7b07b_row2_col0" class="data row2 col0">Scale</td>
+<td id="T_7b07b_row2_col1" class="data row2 col1">0.920400</td>
+</tr>
+<tr class="even">
+<td id="T_7b07b_row3_col0" class="data row3 col0">D_statistics</td>
+<td id="T_7b07b_row3_col1" class="data row3 col1">0.104700</td>
+</tr>
+<tr class="odd">
+<td id="T_7b07b_row4_col0" class="data row4 col0">P-value</td>
+<td id="T_7b07b_row4_col1" class="data row4 col1">0.117300</td>
+</tr>
+<tr class="even">
+<td id="T_7b07b_row5_col0" class="data row5 col0">Fitted Mean</td>
+<td id="T_7b07b_row5_col1" class="data row5 col1">4.350000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The overlayed smooth PDF curve on top of original data’s histogram <a href="#fig-histogram-weibull" class="quarto-xref">Figure&nbsp;7</a> suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table <a href="#tbl-weibull-params" class="quarto-xref">Table&nbsp;4</a>, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c&lt;1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data’s lower bound. Inferred Mean: The calculated mean of approximately 4.35 from these parameters is close but slightly higher than the data’s actual mean of around 4, showing a good capture of central tendency.</p>
+</section>
+<section id="define-the-prior-means-for-overall-population" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="define-the-prior-means-for-overall-population"><span class="header-section-number">4.2</span> Define the prior means for overall population</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">### population unemployment mean probability from the fitted Weibull distribution</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>weibull_fitted_mean_prob <span class="op">=</span> <span class="fl">0.0435</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>population_mean_log_odds <span class="op">=</span> np.log(weibull_fitted_mean_prob <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> weibull_fitted_mean_prob))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="define-the-prior-means-by-races" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="define-the-prior-means-by-races"><span class="header-section-number">4.3</span> Define the prior means by races</h3>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to find the means of different demographics</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mean_prob_demographic(df_name, demographic_type, demographic_description):</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    demographic_mean_prob <span class="op">=</span> df_dic[df_name].loc[df_dic[df_name][demographic_type]<span class="op">==</span>demographic_description][<span class="st">'Unemployment_rate'</span>].mean()<span class="op">/</span><span class="dv">100</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    demographic_mean_log_odds <span class="op">=</span> np.log(demographic_mean_prob <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> demographic_mean_prob))</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># beta_effect is the difference between the demographic group mean log-odds and the population mean log-odds</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    beta_effect <span class="op">=</span> demographic_mean_log_odds <span class="op">-</span> population_mean_log_odds</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> beta_effect</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a grid of demographic information to return the means</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>demographic_grid <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df_name"</span>:[</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Race'</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Race'</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Race'</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"demographic_type"</span>:[</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Race"</span>, </span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Race"</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Race"</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"demographic_description"</span>:[</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">'black_and_african'</span>,</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">'white'</span>,</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">'asian'</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Return the beta_effect of different demographics</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>demographic_grid[<span class="st">'beta_effect'</span>]<span class="op">=</span> np.float64(<span class="dv">0</span>)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>,<span class="bu">len</span>(demographic_grid)):</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Mean of demographic groups</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    beta_effect <span class="op">=</span> mean_prob_demographic(demographic_grid[<span class="st">'df_name'</span>][row], demographic_grid[<span class="st">'demographic_type'</span>][row], demographic_grid[<span class="st">'demographic_description'</span>][row])</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    demographic_grid[<span class="st">'beta_effect'</span>][row] <span class="op">=</span> beta_effect</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="define-the-unemployment-race-pymc" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="define-the-unemployment-race-pymc"><span class="header-section-number">4.4</span> Define the unemployment-race PyMC</h3>
+<p>This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the pymc model</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pymc <span class="im">as</span> pm</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> arviz <span class="im">as</span> az</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> pm.Model() <span class="im">as</span> unemployment_race_model:</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Prior of population mean log odds</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    mu_population_log_odds <span class="op">=</span> pm.Normal(<span class="st">'mu_population_log_odds'</span>, mu<span class="op">=</span>population_mean_log_odds, sigma<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Additive race effect parameter on population mean</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    beta_black <span class="op">=</span> pm.Normal(<span class="st">'beta_black'</span>, mu<span class="op">=</span>demographic_grid[demographic_grid[<span class="st">'demographic_description'</span>]<span class="op">==</span><span class="st">'black_and_african'</span>][<span class="st">'beta_effect'</span>], sigma<span class="op">=</span><span class="fl">0.3</span>) <span class="co"># Can be positive or negative</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    beta_asian <span class="op">=</span> pm.Normal(<span class="st">'beta_asian'</span>, mu<span class="op">=</span>demographic_grid[demographic_grid[<span class="st">'demographic_description'</span>]<span class="op">==</span><span class="st">'asian'</span>][<span class="st">'beta_effect'</span>], sigma<span class="op">=</span><span class="fl">0.3</span>) </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    beta_white <span class="op">=</span> pm.Normal(<span class="st">'beta_white'</span>, mu<span class="op">=</span>demographic_grid[demographic_grid[<span class="st">'demographic_description'</span>]<span class="op">==</span><span class="st">'white'</span>][<span class="st">'beta_effect'</span>], sigma<span class="op">=</span><span class="fl">0.3</span>) </span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># noise</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> pm.HalfNormal(<span class="st">'sigma'</span>, sigma<span class="op">=</span><span class="fl">0.2</span>)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># log-odds and probabilities for each racial group</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    mu_white_log_odds <span class="op">=</span> pm.Deterministic(<span class="st">'mu_white_log_odds'</span>, mu_population_log_odds <span class="op">+</span> beta_white)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    mu_black_log_odds <span class="op">=</span> pm.Deterministic(<span class="st">'mu_black_log_odds'</span>, mu_population_log_odds <span class="op">+</span> beta_black)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    mu_asian_log_odds <span class="op">=</span> pm.Deterministic(<span class="st">'mu_asian_log_odds'</span>, mu_population_log_odds <span class="op">+</span> beta_asian)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    p_population <span class="op">=</span> pm.Deterministic(<span class="st">'p_population'</span>, pm.math.invlogit(mu_population_log_odds))</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    p_white <span class="op">=</span> pm.Deterministic(<span class="st">'p_white'</span>, pm.math.invlogit(mu_white_log_odds))</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    p_black <span class="op">=</span> pm.Deterministic(<span class="st">'p_black'</span>, pm.math.invlogit(mu_black_log_odds))</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    p_asian <span class="op">=</span> pm.Deterministic(<span class="st">'p_asian'</span>, pm.math.invlogit(mu_asian_log_odds))</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Likelihoods for observed data: use parameters like derived above to make predictions about the "true" probabilities of unemployment.</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># predict population mean</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    population_rates_df <span class="op">=</span> df_overall_long[<span class="op">~</span>np.isnan(df_overall_long[<span class="st">'Unemployment_rate'</span>])]</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    population_rates_df[<span class="st">'rate_logit'</span>] <span class="op">=</span> np.log(population_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span><span class="op">/</span>(<span class="dv">1</span><span class="op">-</span>population_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span>))</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    population_rates_obs <span class="op">=</span> pm.Normal(</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>        <span class="st">'population_rates_obs'</span>,</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>        mu<span class="op">=</span>mu_population_log_odds, </span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>        sigma<span class="op">=</span>sigma,</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>        observed<span class="op">=</span>population_rates_df[<span class="st">'rate_logit'</span>].values</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># predict black mean</span></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>    black_rates_df <span class="op">=</span> df_dic[<span class="st">'Race'</span>][df_dic[<span class="st">'Race'</span>][<span class="st">'Race'</span>]<span class="op">==</span><span class="st">'black_and_african'</span>]</span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>    black_rates_df <span class="op">=</span> black_rates_df[<span class="op">~</span>np.isnan(black_rates_df[<span class="st">'Unemployment_rate'</span>])] </span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>    black_rates_df[<span class="st">'rate_logit'</span>] <span class="op">=</span> np.log(black_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span><span class="op">/</span>(<span class="dv">1</span><span class="op">-</span>black_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span>))</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>    black_rates_obs <span class="op">=</span> pm.Normal(</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>        <span class="st">'black_rates_obs'</span>,</span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>        mu<span class="op">=</span>mu_black_log_odds, </span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>        sigma<span class="op">=</span>sigma,</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>        observed<span class="op">=</span>black_rates_df[<span class="st">'rate_logit'</span>].values</span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># predict asian mean</span></span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>    asian_rates_df <span class="op">=</span> df_dic[<span class="st">'Race'</span>][df_dic[<span class="st">'Race'</span>][<span class="st">'Race'</span>]<span class="op">==</span><span class="st">'asian'</span>]</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>    asian_rates_df <span class="op">=</span> asian_rates_df[<span class="op">~</span>np.isnan(asian_rates_df[<span class="st">'Unemployment_rate'</span>])] </span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>    asian_rates_df[<span class="st">'rate_logit'</span>] <span class="op">=</span> np.log(asian_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span><span class="op">/</span>(<span class="dv">1</span><span class="op">-</span>asian_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span>))</span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>    asian_rates_obs <span class="op">=</span> pm.Normal(</span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>        <span class="st">'asian_rates_obs'</span>,</span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>        mu<span class="op">=</span>mu_asian_log_odds,</span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>        sigma<span class="op">=</span>sigma,</span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>        observed<span class="op">=</span>asian_rates_df[<span class="st">'rate_logit'</span>].values</span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>    <span class="co"># predict white mean</span></span>
+<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>    white_rates_df <span class="op">=</span> df_dic[<span class="st">'Race'</span>][df_dic[<span class="st">'Race'</span>][<span class="st">'Race'</span>]<span class="op">==</span><span class="st">'white'</span>]</span>
+<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>    white_rates_df <span class="op">=</span> white_rates_df[<span class="op">~</span>np.isnan(white_rates_df[<span class="st">'Unemployment_rate'</span>])] </span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>    white_rates_df[<span class="st">'rate_logit'</span>] <span class="op">=</span> np.log(white_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span><span class="op">/</span>(<span class="dv">1</span><span class="op">-</span>white_rates_df[<span class="st">'Unemployment_rate'</span>]<span class="op">*</span><span class="fl">0.01</span>))</span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>    white_rates_obs <span class="op">=</span> pm.Normal(</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>        <span class="st">'white_rates_obs'</span>,</span>
+<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>        mu<span class="op">=</span>mu_white_log_odds,</span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>        sigma<span class="op">=</span>sigma,</span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>        observed<span class="op">=</span>white_rates_df[<span class="st">'rate_logit'</span>].values</span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Assign the correct probability based on race</span></span>
+<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>    p_individual_for_obs <span class="op">=</span> pm.math.switch(</span>
+<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>        df_survey_jun[<span class="st">'is_black_african'</span>].values,</span>
+<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>        p_black, <span class="co"># if is_black, use black prob</span></span>
+<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>        pm.math.switch(</span>
+<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>            df_survey_jun[<span class="st">'is_asian'</span>].values, </span>
+<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>            p_asian, <span class="co"># if is_asian, use asian prob</span></span>
+<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>            p_white <span class="co"># else, use white prob</span></span>
+<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a>    individual_status_obs <span class="op">=</span> pm.Bernoulli(</span>
+<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a>        <span class="st">'individual_status_obs'</span>,</span>
+<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a>        p<span class="op">=</span>p_individual_for_obs,</span>
+<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>        observed<span class="op">=</span>df_survey_jun[<span class="st">'unemployment_status'</span>].values</span>
+<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="graph-the-unemployment-race-pgm" class="level3" data-number="4.5">
+<h3 data-number="4.5" class="anchored" data-anchor-id="graph-the-unemployment-race-pgm"><span class="header-section-number">4.5</span> Graph the unemployment-race PGM</h3>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>pm.model_to_graphviz(unemployment_race_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="c1b2f429" class="cell" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="20">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-21-output-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="index_files/figure-html/cell-21-output-1.svg" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="fit-the-unemployment-race-model---perform-mcmc-sampling" class="level3" data-number="4.6">
+<h3 data-number="4.6" class="anchored" data-anchor-id="fit-the-unemployment-race-model---perform-mcmc-sampling"><span class="header-section-number">4.6</span> Fit the unemployment-race Model - Perform MCMC Sampling</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Starting MCMC sampling..."</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> unemployment_race_model:</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    indiv_trace <span class="op">=</span> pm.sample(random_seed<span class="op">=</span><span class="dv">5650</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="28a4e0c7" class="cell" data-execution_count="21">
+<div class="cell-output cell-output-stdout">
+<pre><code>Starting MCMC sampling...</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"f52eb5559a1548189c7c46c9cea1d134","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
+</div>
+<div class="cell-output cell-output-display">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+</div>
+</div>
+</section>
+<section id="analyze-unemployment-race-results-and-visualize" class="level3" data-number="4.7">
+<h3 data-number="4.7" class="anchored" data-anchor-id="analyze-unemployment-race-results-and-visualize"><span class="header-section-number">4.7</span> Analyze unemployment-race Results and Visualize</h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Analyze Results and Visualize</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">--- Model Summary (Simplified Model - Multiple Races) ---"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame(az.summary(indiv_trace, var_names<span class="op">=</span>[<span class="st">'mu_population_log_odds'</span>, <span class="st">'beta_black'</span>, <span class="st">'beta_asian'</span>, <span class="st">'beta_white'</span>, <span class="st">'sigma'</span>])))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Trace plot</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>fig_trace <span class="op">=</span> az.plot_trace(indiv_trace)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>plt.suptitle(<span class="st">'Trace plot'</span>, fontsize<span class="op">=</span><span class="dv">16</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>plt.subplots_adjust(hspace<span class="op">=</span><span class="fl">0.5</span>) </span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to DataFrame</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>indiv_post_df <span class="op">=</span> indiv_trace.posterior.to_dataframe().reset_index()</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract only the first chain</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>indiv_post_df <span class="op">=</span> indiv_post_df[indiv_post_df[<span class="st">'chain'</span>] <span class="op">==</span> <span class="dv">0</span>]</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Melt</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>indiv_post_df <span class="op">=</span> indiv_post_df[[<span class="st">'draw'</span>,<span class="st">'beta_black'</span>, <span class="st">'beta_asian'</span>, <span class="st">'beta_white'</span>]].melt(id_vars<span class="op">=</span>[<span class="st">'draw'</span>])</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Density plot</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> patchworklib <span class="im">as</span> pw</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> pw.Brick(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="fl">2.5</span>))<span class="op">;</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>sns.kdeplot(</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">"value"</span>, hue<span class="op">=</span><span class="st">"variable"</span>, data<span class="op">=</span>indiv_post_df, ax<span class="op">=</span>ax,</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    fill<span class="op">=</span><span class="va">True</span>, bw_adjust<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Log-Odds Deviation from Overall Mean"</span>)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Density"</span>)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Posterior Distribution of Race Effect Deviations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="da172b8c" class="cell" data-execution_count="22">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Model Summary (Simplified Model - Multiple Races) ---</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">mean</th>
+<th data-quarto-table-cell-role="th">sd</th>
+<th data-quarto-table-cell-role="th">hdi_3%</th>
+<th data-quarto-table-cell-role="th">hdi_97%</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">ess_bulk</th>
+<th data-quarto-table-cell-role="th">ess_tail</th>
+<th data-quarto-table-cell-role="th">r_hat</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">mu_population_log_odds</td>
+<td>-3.146</td>
+<td>0.028</td>
+<td>-3.199</td>
+<td>-3.093</td>
+<td>0.001</td>
+<td>0.000</td>
+<td>1539.0</td>
+<td>1941.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">beta_black[0]</td>
+<td>0.565</td>
+<td>0.038</td>
+<td>0.497</td>
+<td>0.640</td>
+<td>0.001</td>
+<td>0.001</td>
+<td>1845.0</td>
+<td>2677.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">beta_asian[0]</td>
+<td>-0.149</td>
+<td>0.039</td>
+<td>-0.218</td>
+<td>-0.075</td>
+<td>0.001</td>
+<td>0.001</td>
+<td>1859.0</td>
+<td>2245.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">beta_white[0]</td>
+<td>-0.128</td>
+<td>0.034</td>
+<td>-0.191</td>
+<td>-0.065</td>
+<td>0.001</td>
+<td>0.000</td>
+<td>1772.0</td>
+<td>2332.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">sigma</td>
+<td>0.320</td>
+<td>0.010</td>
+<td>0.301</td>
+<td>0.340</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>3604.0</td>
+<td>2570.0</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="22">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-23-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="index_files/figure-html/cell-23-output-3.png" width="454" height="326" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-23-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="index_files/figure-html/cell-23-output-4.png" width="924" height="2045" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-23-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="index_files/figure-html/cell-23-output-5.png" width="454" height="326" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.</p>
+</section>
+<section id="pgm-for-unemployment-industry" class="level3" data-number="4.8">
+<h3 data-number="4.8" class="anchored" data-anchor-id="pgm-for-unemployment-industry"><span class="header-section-number">4.8</span> PGM for unemployment-industry</h3>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>survey_df_industry <span class="op">=</span> survey_df[<span class="op">~</span>survey_df[<span class="st">'industry_name'</span>].isin([<span class="st">'Construction'</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Mining'</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Other services'</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Agriculture, forestry, fishing, and hunting'</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Armed Forces'</span>])]</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>survey_df_industry <span class="op">=</span> survey_df_industry[survey_df_industry[<span class="st">'employment_status_description'</span>]<span class="op">!=</span><span class="st">"not in labor force"</span>]</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">## Factorize the industry_name column to get numerical indices and names</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>industry_idx, industry_names <span class="op">=</span> survey_df_industry[<span class="st">'industry_name'</span>].factorize()</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>survey_df_industry[<span class="st">'industry_idx'</span>] <span class="op">=</span> industry_idx</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">## Map EmploymentStatus to numerical (0 for Employed, 1 for Unemployed)</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>survey_df_industry[<span class="st">'unemployment_status'</span>] <span class="op">=</span> survey_df_industry[<span class="st">'employment_status_description'</span>].<span class="bu">map</span>({<span class="st">'employed'</span>: <span class="dv">0</span>, <span class="st">'unemployed'</span>: <span class="dv">1</span>})</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">## 2. Get the prior means and sds of unemployment rates by industries from the historical monthly statistics (exlcuding 2020-2021)</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>df_industry_monthly_ur <span class="op">=</span> df_industry[<span class="op">~</span>df_industry[<span class="st">'Industry'</span>].isin([<span class="st">'construction'</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'mining_quarrying_and_oil_and_gas_ extraction'</span>,</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'other_services'</span>,</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'agricultural'</span>,</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'self_employed'</span>,</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'non_durable_goods'</span>,</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'durable_goods'</span>])]</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>ur_by_industry <span class="op">=</span> pd.DataFrame(df_industry_monthly_ur.groupby(<span class="st">'Industry'</span>, as_index<span class="op">=</span><span class="va">False</span>).agg(</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>    mean_ur <span class="op">=</span> (<span class="st">'Unemployment_rate'</span>,<span class="st">'mean'</span>),</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>    sd_ur <span class="op">=</span> (<span class="st">'Unemployment_rate'</span>, <span class="st">'std'</span>)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a> <span class="co"># modify the industry name column to align with industry_names</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>ur_by_industry[<span class="st">'Industry'</span>]<span class="op">=</span>[<span class="st">'Educational and health services'</span>,</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Financial activities'</span>,</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Public administration'</span>,</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Information'</span>,</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Leisure and hospitality'</span>,</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Manufacturing'</span>,</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Professional and business services'</span>,</span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Transportation and utilities'</span>,</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>                            <span class="st">'Wholesale and retail trade'</span>]</span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Logit transformation function</span></span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> logit(p):</span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.log(p <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p))</span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>ur_by_industry[<span class="st">'mean_ur_logit'</span>] <span class="op">=</span> logit(ur_by_industry[<span class="st">'mean_ur'</span>]<span class="op">/</span><span class="dv">100</span>)</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>ur_by_industry[<span class="st">'sd_ur_logit'</span>] <span class="op">=</span> logit(ur_by_industry[<span class="st">'sd_ur'</span>]<span class="op">/</span><span class="dv">100</span>)</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a><span class="co">## 3. Define the Adaptive pooling PyMC model</span></span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a><span class="co"># priors</span></span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>ur_by_industry_copy <span class="op">=</span> ur_by_industry.copy()</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>ur_by_industry_copy <span class="op">=</span> ur_by_industry_copy.set_index(<span class="st">'Industry'</span>)</span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>prior_mu_alpha_vals <span class="op">=</span> np.array([ur_by_industry_copy.loc[ind, <span class="st">'mean_ur_logit'</span>] <span class="cf">for</span> ind <span class="kw">in</span> industry_names])</span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a>prior_sigma_alpha_vals <span class="op">=</span> np.array([ur_by_industry_copy.loc[ind, <span class="st">'sd_ur_logit'</span>] <span class="cf">for</span> ind <span class="kw">in</span> industry_names])</span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the PGM model</span></span>
+<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a>coords <span class="op">=</span> {<span class="st">"industry"</span>: industry_names}</span>
+<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> pm.Model(coords<span class="op">=</span>coords) <span class="im">as</span> adaptive_unemployment_industry_model:</span>
+<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>    industry_idx_obs <span class="op">=</span> pm.Data(<span class="st">"industry_idx_obs"</span>, survey_df_industry[<span class="st">'industry_idx'</span>].values, dims<span class="op">=</span><span class="st">"obs_id"</span>)</span>
+<span id="cb18-53"><a href="#cb18-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Global Priors </span></span>
+<span id="cb18-54"><a href="#cb18-54" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> pm.Exponential(<span class="st">"sigma"</span>, <span class="dv">1</span>) <span class="co"># standard deviation for alpha_industry</span></span>
+<span id="cb18-55"><a href="#cb18-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Industry-Specific Parameters - observed industry means</span></span>
+<span id="cb18-56"><a href="#cb18-56" aria-hidden="true" tabindex="-1"></a>    mu_alpha_industry <span class="op">=</span> pm.Data(<span class="st">"mu_alpha_industry"</span>, prior_mu_alpha_vals, dims<span class="op">=</span><span class="st">"industry"</span>) <span class="co"># history industry means</span></span>
+<span id="cb18-57"><a href="#cb18-57" aria-hidden="true" tabindex="-1"></a>    alpha_industry <span class="op">=</span> pm.Normal(<span class="st">"alpha_industry"</span>, </span>
+<span id="cb18-58"><a href="#cb18-58" aria-hidden="true" tabindex="-1"></a>                                mu<span class="op">=</span>mu_alpha_industry, <span class="co"># historical industry means</span></span>
+<span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a>                                sigma<span class="op">=</span>sigma,</span>
+<span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a>                                dims<span class="op">=</span><span class="st">"industry"</span>)</span>
+<span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Probability of unemployment of each industry determined by alpha_industry</span></span>
+<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a>    p_unemployment <span class="op">=</span> pm.Deterministic(<span class="st">"p_unemployment"</span>, pm.invlogit(alpha_industry[industry_idx_obs]))</span>
+<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Observed data - unemployment status</span></span>
+<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a>    unemployment_status_observed <span class="op">=</span> pm.Bernoulli(<span class="st">"unemployment_status"</span>, </span>
+<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a>                                            p<span class="op">=</span>p_unemployment, </span>
+<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a>                                            observed<span class="op">=</span>survey_df_industry[<span class="st">'unemployment_status'</span>].values,</span>
+<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>                                            dims<span class="op">=</span><span class="st">"obs_id"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">## 4.Visualize the PGM</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>pm.model_to_graphviz(adaptive_unemployment_industry_model)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="104cd415" class="cell" data-execution_count="24">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-25-output-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="index_files/figure-html/cell-25-output-1.svg" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">## 5.MCMC sampling and prediction</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> adaptive_unemployment_industry_model:</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    ur_industry_trace <span class="op">=</span> pm.sample(tune <span class="op">=</span> <span class="dv">500</span>, draws<span class="op">=</span><span class="dv">500</span>, random_seed<span class="op">=</span><span class="dv">5650</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Pring summary of the trace</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>trace_alpha_summary <span class="op">=</span> az.summary(</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    ur_industry_trace,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    var_names<span class="op">=</span>[<span class="st">'alpha_industry'</span>],</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    kind<span class="op">=</span><span class="st">"stats"</span>, </span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    round_to<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>trace_alpha_summary[<span class="st">'mean'</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>trace_alpha_summary[<span class="st">'mean'</span>])) <span class="co"># convert logit to probability</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>trace_alpha_summary[<span class="st">'hdi_3%'</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>trace_alpha_summary[<span class="st">'hdi_3%'</span>])) <span class="co"># convert logit to probability</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>trace_alpha_summary[<span class="st">'hdi_97%'</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>trace_alpha_summary[<span class="st">'hdi_97%'</span>])) <span class="co"># convert logit to probability</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>display(trace_alpha_summary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="2436a7c2" class="cell" data-execution_count="25">
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"e8941c71942e4ed0b4d04f1133625cf0","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
+</div>
+<div class="cell-output cell-output-display">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+</div>
+</div>
+<div class="cell" data-tbl-center="true" data-tbl-col="true" data-execution_count="26">
+<div id="tbl-industry-trace-summary" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="26" data-tbl-center="true" data-tbl-col="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-industry-trace-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Summary of Posterior Distributions
+</figcaption>
+<div aria-describedby="tbl-industry-trace-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">mean</th>
+<th data-quarto-table-cell-role="th">sd</th>
+<th data-quarto-table-cell-role="th">hdi_3%</th>
+<th data-quarto-table-cell-role="th">hdi_97%</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">alpha_industry[Leisure and hospitality]</td>
+<td>0.056786</td>
+<td>0.02</td>
+<td>0.055201</td>
+<td>0.058967</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">alpha_industry[Educational and health services]</td>
+<td>0.023661</td>
+<td>0.02</td>
+<td>0.022977</td>
+<td>0.024364</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">alpha_industry[Wholesale and retail trade]</td>
+<td>0.042290</td>
+<td>0.02</td>
+<td>0.040699</td>
+<td>0.043522</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">alpha_industry[Manufacturing]</td>
+<td>0.030769</td>
+<td>0.02</td>
+<td>0.029598</td>
+<td>0.032295</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">alpha_industry[Financial activities]</td>
+<td>0.022977</td>
+<td>0.03</td>
+<td>0.021881</td>
+<td>0.024602</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">alpha_industry[Professional and business services]</td>
+<td>0.038791</td>
+<td>0.02</td>
+<td>0.037688</td>
+<td>0.039925</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">alpha_industry[Public administration]</td>
+<td>0.017810</td>
+<td>0.04</td>
+<td>0.016464</td>
+<td>0.019265</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">alpha_industry[Transportation and utilities]</td>
+<td>0.036969</td>
+<td>0.03</td>
+<td>0.035230</td>
+<td>0.038791</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">alpha_industry[Information]</td>
+<td>0.047426</td>
+<td>0.04</td>
+<td>0.043522</td>
+<td>0.051174</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The provided trace summary (<a href="#tbl-industry-trace-summary" class="quarto-xref">Table&nbsp;5</a>) details the posterior estimates for the alpha_industry parameters, which represent the estimated industry-specific parameters for unemployment probability. For example, ‘Leisure and hospitality’ has a mean of 0.056, while ‘Public administration’ has a mean of 0.018. The sd, hdi_3% and hdi_97% are consistently quite narrow across all industries, (e.g., ‘Leisure and hospitality’ from 0.055 to 0.059, a range of 0.004). This indicates a strong concentration of posterior probability around the mean estimates.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Posterior mean</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ur_industry_post_mean <span class="op">=</span> ur_industry_trace.posterior.mean(dim<span class="op">=</span>(<span class="st">"chain"</span>, <span class="st">"draw"</span>))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>ur_industry_post_mean_iter <span class="op">=</span> ur_industry_post_mean.sortby(<span class="st">"alpha_industry"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>ur_industry_post_mean_iter[<span class="st">'alpha_prob'</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>ur_industry_post_mean_iter[<span class="st">'alpha_industry'</span>]))</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>ur_industry_post_mean.to_dataframe()</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>ur_industry_post_hdi <span class="op">=</span> az.hdi(ur_industry_trace)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>ur_industry_post_hdi_iter <span class="op">=</span> ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>ur_industry_post_hdi_iter[<span class="st">'alpha_prob'</span>]<span class="op">=</span><span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>ur_industry_post_hdi_iter[<span class="st">'alpha_industry'</span>]))</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>ur_industry_post_hdi_iter.to_dataframe()</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the posterior alpha_industry (mean of unemployment)</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">8</span>))</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>ur_industry_post_mean_iter.plot.scatter(x<span class="op">=</span><span class="st">'industry'</span>, y<span class="op">=</span><span class="st">"alpha_prob"</span>, ax<span class="op">=</span>ax, alpha<span class="op">=</span><span class="fl">0.8</span>, s<span class="op">=</span><span class="dv">80</span>)</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>ax.vlines(</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    np.arange(industry_names.size),</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    ur_industry_post_hdi_iter.alpha_prob.sel(hdi<span class="op">=</span><span class="st">"lower"</span>),</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    ur_industry_post_hdi_iter.alpha_prob.sel(hdi<span class="op">=</span><span class="st">"higher"</span>),</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.6</span>,</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">3</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, alpha<span class="op">=</span><span class="fl">0.6</span>, color<span class="op">=</span><span class="st">'lightgray'</span>)     </span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>ax.tick_params(axis<span class="op">=</span><span class="st">'x'</span>, labelsize<span class="op">=</span><span class="dv">10</span>, rotation<span class="op">=</span><span class="dv">90</span>)</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Industry'</span>, fontsize <span class="op">=</span> <span class="dv">12</span>)</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Posterior means'</span>, fontsize <span class="op">=</span> <span class="dv">12</span>)</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Estimated Industry-Specific Unemployment Rate (Adaptive Pooling)"</span>, y<span class="op">=</span><span class="fl">1.02</span>, fontsize<span class="op">=</span><span class="dv">16</span>)</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>plt.tight_layout() </span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-fig-industry-pgm-scatter" class="cell" data-execution_count="27">
+<div class="cell-output cell-output-display">
+<div id="fig-industry-pgm-scatter" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot the scatter plot of the estimated unemployment rates by industries">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-industry-pgm-scatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-industry-pgm-scatter-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="Figure&nbsp;8: Estimated Industry-Specific Unemployment Rate (Adaptive Pooliing)"><img src="index_files/figure-html/fig-industry-pgm-scatter-output-1.png" alt="Plot the scatter plot of the estimated unemployment rates by industries" width="944" height="748" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-industry-pgm-scatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Estimated Industry-Specific Unemployment Rate (Adaptive Pooliing)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The PGM estimated unemployment rates graphed in <a href="#fig-industry-pgm-scatter" class="quarto-xref">Figure&nbsp;8</a> reveals distinct causal influences of industry type on unemployment probability. The model infers that the ‘Leisure and Hospitality’ industry has the highest positive causal effect on unemployment likelihood. Conversely, ‘Public Administration’ and ‘Financial Services’ show a negative causal influence, resulting in lower estimated unemployment rates. The ‘Information’ industry, while having the second-highest mean unemployment, exhibits the widest credible interval, indicating greater uncertainty in quantifying its causal impact on employment stability.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the trace for Information, Leisure &amp; Hospitality, Government Administration and Financial services</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>trace_industries<span class="op">=</span> [<span class="st">'Leisure and hospitality'</span>,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">'Financial activities'</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>              <span class="st">'Public administration'</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>              <span class="st">'Information'</span>]</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">## create subset of the trace summary with the selected industries alpha transformed to probabilities</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>alpha_industry_subset <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>ur_industry_trace.posterior[<span class="st">'alpha_industry'</span>].sel(industry<span class="op">=</span>trace_industries)))</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>trace_for_plot <span class="op">=</span> az.InferenceData(</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    posterior<span class="op">=</span>xr.Dataset(</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>        data_vars<span class="op">=</span>{</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>            <span class="st">'sigma'</span>: ur_industry_trace.posterior[<span class="st">'sigma'</span>],</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>            <span class="st">'alpha_industry'</span>: alpha_industry_subset</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>az.plot_trace(trace_for_plot)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="737050e9" class="cell" data-execution_count="28">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-29-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="index_files/figure-html/cell-29-output-1.png" width="1137" height="369" class="figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="references" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Joseph2024" class="csl-entry" role="listitem">
+Joseph Dean, Estee Smith. 2024. <span>“<a href="">Gender Differences in Unemployment Trends: Race, Jobs and the Economy Update for February 2024</a>.”</span> <em>NCRC</em>, March.
+</div>
+<div id="ref-TOIEducation2025" class="csl-entry" role="listitem">
+TOIEducation. 2025. <span>“<a href="">Degrees at Risk: 10 US College Majors with the Highest Unemployment Rate in 2025</a>.”</span> <em>The Times Of India</em>, July.
+</div>
+<div id="ref-Oberlo2024" class="csl-entry" role="listitem">
+<span>“<a href="">US UNEMPLOYMENT RATE BY INDUSTRY (2024)</a>.”</span> 2024. <em>Oberlo</em>.
+</div>
+<div id="ref-ValerieWilson2022" class="csl-entry" role="listitem">
+Wilson, Valerie, and William Darity-Jr. 2022. <span>“<a href="">Understanding Black-White Disparities in Labor Market Outcomes Requires Models That Account for Persistent Discrimination and Unequal Bargaining Power</a>.”</span> <em>Economic Policy Institute</em>, March.
+</div>
+<div id="ref-YiLiChienandPaulMorris" class="csl-entry" role="listitem">
+YiLi Chien, Paul Morris. 2016. <span>“<a href="">Unemployment by Industry: Duration Must Be Considered, Too</a>.”</span> <em>Federal Reserve Bank of St.Lois - Regional Economist</em>, January.
+</div>
+</div>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{wei2025,
+  author = {Wei, Mengjia},
+  title = {Causal {Inference} of {Labor} {Market} {Inequality} {Using}
+    {PGM:} {A} Multidimensional Analysis of Unemployment Rate and
+    Durations},
+  date = {2025-08-04},
+  langid = {en},
+  abstract = {In its revised report released on July 31, 2025, the U.S.
+    Bureau of Labor Statistics (BLS) reported a sharp slowdown in job
+    creation beginning in May, signaling heightened uncertainty and
+    growing concerns about the overall health of the U.S. labor market.
+    This study investigates the causal relationships between race,
+    industry and unemployment rates in the United States,
+    applying~probabilistic graphical modeling (PGM)~to uncover latent
+    dependency structures across demographic and industry variables.
+    Using a PGM framework, we extend this approach to labor market data
+    by constructing conditional dependence networks across two key
+    dimensions: group attributes (race and industry) and time (2024 vs.
+    2025). Specifically, the study examines recent college graduates
+    (ages 22–24) relative to older individuals (25+), comparing their
+    unemployment rates across 2024 and 2025. This study first examined
+    the race effect on the unemployment rate disparitu. The
+    industry-specific unemployment rate dynamics focuses on {[}retail{]}
+    {[}{]} and {[}Leisure and hospitality{]} sectors. This analysis
+    seeks to identify whether certain groups—such as Black labor force
+    and {[}Retail Industry{]}—face higher or lower unemployment,
+    providing a more comprehensive view of labor market hardship. The
+    model estimates the strength and direction of probabilistic
+    dependencies using Bayesian structure learning algorithms, based on
+    labor force aggregated data from BLS CPS datasets. The results
+    indicate that {[}conclusion1{]}. Additionally, the {[}retail{]},
+    {[}{]}, and {[}technology{]} industries experienced increased
+    unemployment rates between the year of 2015 and the year of 2025,
+    with respective changes of~{[} {]},~{[} {]}, and~{[} {]}~percentage
+    points. The PGM framework reveals significant interactive effects
+    between race and industry on unemployment, particularly among Black
+    workers~and the~{[}retail and hospitality{]}~sectors. These findings
+    contribute to the growing literature that leverages PGMs for social
+    inference (e.g., Li et al., 2022), highlighting the model’s
+    potential for uncovering structural labor inequalities over time and
+    across population subgroups.}
+}
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-wei2025" class="csl-entry quarto-appendix-citeas" role="listitem">
+Wei, Mengjia. 2025. <span>“Causal Inference of Labor Market Inequality
+Using PGM: A Multidimensional Analysis of Unemployment Rate and
+Durations.”</span> Georgetown Univeristy DSAN 5650 Journal. August 4,
+2025.
+</div></div></section></div></main>
+<!-- /main column -->
+<script type="application/vnd.jupyter.widget-state+json">
+{"state":{"27c00a1ffc4f480d9df5fe2ee4670992":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"989ce53bbf6846d5b648d2bbad5a6c5d":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"e8941c71942e4ed0b4d04f1133625cf0":{"model_module":"@jupyter-widgets/output","model_module_version":"1.0.0","model_name":"OutputModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/output","_model_module_version":"1.0.0","_model_name":"OutputModel","_view_count":null,"_view_module":"@jupyter-widgets/output","_view_module_version":"1.0.0","_view_name":"OutputView","layout":"IPY_MODEL_27c00a1ffc4f480d9df5fe2ee4670992","msg_id":"","outputs":[{"data":{"text/html":"<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">                                                                                                                   \n <span style=\"font-weight: bold\"> Progress                  </span> <span style=\"font-weight: bold\"> Draws </span> <span style=\"font-weight: bold\"> Divergences </span> <span style=\"font-weight: bold\"> Step size </span> <span style=\"font-weight: bold\"> Grad evals </span> <span style=\"font-weight: bold\"> Sampling Speed </span> <span style=\"font-weight: bold\"> Elapsed </span> <span style=\"font-weight: bold\"> Remaining </span> \n ───────────────────────────────────────────────────────────────────────────────────────────────────────────────── \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   1000    0             0.93        7            7.92 draws/s     0:02:06   0:00:00    \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   1000    0             0.77        7            7.70 draws/s     0:02:09   0:00:00    \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   1000    0             0.98        3            7.97 draws/s     0:02:05   0:00:00    \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   1000    0             0.56        7            8.01 draws/s     0:02:04   0:00:00    \n                                                                                                                   \n</pre>\n","text/plain":"                                                                                                                   \n \u001b[1m \u001b[0m\u001b[1mProgress                 \u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mDraws\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mDivergences\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mStep size\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mGrad evals\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mSampling Speed\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mElapsed\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mRemaining\u001b[0m\u001b[1m \u001b[0m \n ───────────────────────────────────────────────────────────────────────────────────────────────────────────────── \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   1000    0             0.93        7            7.92 draws/s     0:02:06   0:00:00    \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   1000    0             0.77        7            7.70 draws/s     0:02:09   0:00:00    \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   1000    0             0.98        3            7.97 draws/s     0:02:05   0:00:00    \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   1000    0             0.56        7            8.01 draws/s     0:02:04   0:00:00    \n                                                                                                                   \n"},"metadata":{},"output_type":"display_data"}],"tabbable":null,"tooltip":null}},"f52eb5559a1548189c7c46c9cea1d134":{"model_module":"@jupyter-widgets/output","model_module_version":"1.0.0","model_name":"OutputModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/output","_model_module_version":"1.0.0","_model_name":"OutputModel","_view_count":null,"_view_module":"@jupyter-widgets/output","_view_module_version":"1.0.0","_view_name":"OutputView","layout":"IPY_MODEL_989ce53bbf6846d5b648d2bbad5a6c5d","msg_id":"","outputs":[{"data":{"text/html":"<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">                                                                                                                   \n <span style=\"font-weight: bold\"> Progress                  </span> <span style=\"font-weight: bold\"> Draws </span> <span style=\"font-weight: bold\"> Divergences </span> <span style=\"font-weight: bold\"> Step size </span> <span style=\"font-weight: bold\"> Grad evals </span> <span style=\"font-weight: bold\"> Sampling Speed </span> <span style=\"font-weight: bold\"> Elapsed </span> <span style=\"font-weight: bold\"> Remaining </span> \n ───────────────────────────────────────────────────────────────────────────────────────────────────────────────── \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   2000    0             0.41        7            152.26 draws/s   0:00:13   0:00:00    \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   2000    0             0.62        7            153.39 draws/s   0:00:13   0:00:00    \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   2000    0             0.72        7            156.82 draws/s   0:00:12   0:00:00    \n  <span style=\"color: #1f77b4; text-decoration-color: #1f77b4\">━━━━━━━━━━━━━━━━━━━━━━━━━</span>   2000    0             0.44        7            149.73 draws/s   0:00:13   0:00:00    \n                                                                                                                   \n</pre>\n","text/plain":"                                                                                                                   \n \u001b[1m \u001b[0m\u001b[1mProgress                 \u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mDraws\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mDivergences\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mStep size\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mGrad evals\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mSampling Speed\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mElapsed\u001b[0m\u001b[1m \u001b[0m \u001b[1m \u001b[0m\u001b[1mRemaining\u001b[0m\u001b[1m \u001b[0m \n ───────────────────────────────────────────────────────────────────────────────────────────────────────────────── \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   2000    0             0.41        7            152.26 draws/s   0:00:13   0:00:00    \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   2000    0             0.62        7            153.39 draws/s   0:00:13   0:00:00    \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   2000    0             0.72        7            156.82 draws/s   0:00:12   0:00:00    \n  \u001b[38;2;31;119;180m━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m   2000    0             0.44        7            149.73 draws/s   0:00:13   0:00:00    \n                                                                                                                   \n"},"metadata":{},"output_type":"display_data"}],"tabbable":null,"tooltip":null}}},"version_major":2,"version_minor":0}
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

@@ -9,6 +9,7 @@ execute:
 
 format:
   html:
+    css: styles.css
     toc: true
     number-sections: true 
     toc-depth: 3
