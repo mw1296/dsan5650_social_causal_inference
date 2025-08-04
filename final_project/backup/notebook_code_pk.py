@@ -555,5 +555,14 @@ with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
                                             observed=survey_df_industry['unemployment_status'].values,
                                             dims="obs_id")
 
-# Visualize the PGM
+## 4.Visualize the PGM
 pm.model_to_graphviz(adaptive_unemployment_industry_model)  
+
+## 5.MCMC sampling
+with adaptive_unemployment_industry_model:
+    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
+# summary of result
+az.summary(ur_industry_trace, round_to=2)
+# post mean
+ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
+ur_industry_post_mean
