@@ -15,3 +15,4 @@ This project investigates the causal relationship between race & industry and un
 ├── requirement.txt/        # Packages that are needed
 ├── _quarto.yaml/           # Define rendered file formats
 └── README.md               # Project overview (this file)
+```
