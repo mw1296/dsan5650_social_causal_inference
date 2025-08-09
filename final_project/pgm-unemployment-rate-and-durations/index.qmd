@@ -521,7 +521,7 @@ display(weibull_stats_table.style.hide(axis="index"))
 
 The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.35 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
 
-###  Race model - Define the prior means for overall population
+### Race model - Define the prior means for overall population
 ```python
 ### population unemployment mean probability from the fitted Weibull distribution
 weibull_fitted_mean_prob = 0.0435
@@ -538,7 +538,7 @@ population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted
 print(f"population mean log-odds: {population_mean_log_odds:.4f}")
 ```
 
-###  Race model - Define the prior means by races
+### Race model - Define the prior means by races
 ```python
 # Function to find the means of different demographics
 def mean_prob_demographic(df_name, demographic_type, demographic_description):
@@ -615,7 +615,7 @@ display(demographic_grid)
 
 The corresponding beta_effect for each of three races are shown in table above. These beta parameters are additive race effect parameter on population mean.
 
-###  Race model - Train-test split
+### Race model - Train-test split
 Before PyMC - Split survey data to train and test datasets in order to test the performance of the models
 
 ```python
@@ -628,7 +628,7 @@ from sklearn.model_selection import train_test_split
 train_df_survey, test_df_survey = train_test_split(df_survey_jun_jul, test_size=0.2, random_state=5650)
 ```
 
-###  Race model - Define the PyMC model
+### Race model - Define the PyMC model
 This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
 
 ```python
@@ -705,7 +705,7 @@ with pm.Model(coords=train_coords) as unemployment_race_model:
     unemployment = pm.Bernoulli("unemployment", p = p_unemployment, observed=unemployment_obs, dims="response_id")
 ```
 
-###  Race model - Graph PGM
+### Race model - Graph PGM
 ```python
 pm.model_to_graphviz(unemployment_race_model)
 ```
@@ -714,7 +714,7 @@ pm.model_to_graphviz(unemployment_race_model)
 pm.model_to_graphviz(unemployment_race_model)
 ```
 
-###  Race model - Estimate model parameters
+### Race model - Estimate model parameters
 ```python
 print("Starting MCMC sampling...")
 with unemployment_race_model:
@@ -745,10 +745,21 @@ display(pd.DataFrame(az.summary(race_idata)))
 ```
 @tbl-race-model-params displays information (mu_population, beta, p_unemployment) about the estimated posterior distribution over values of the race model's parameters.
 
-```{python}
-race_idata
+```python
+# Chcek train posterior mean vs. mena of survey train data
+print(f'posterior_unemployment_mean on train data: {race_idata.posterior.p_unemployment.mean().values:.5f}')
+
+print(f'unemployment_mean on train data: {y_train.mean():.5f}')
 ```
 
+```{python}
+# Chcek train posterior mean vs. mena of survey train data
+print(f'posterior_unemployment_mean on train data: {race_idata.posterior.p_unemployment.mean().values:.5f}')
+
+print(f'unemployment_mean on train data: {y_train.mean():.5f}')
+```
+
+The PGM posterior predictive unemployement mean on train data is very close to the calculated unemployment mean
 
 ```python
 # Trace plot
