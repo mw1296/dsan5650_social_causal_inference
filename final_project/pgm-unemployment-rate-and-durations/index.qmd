@@ -743,23 +743,8 @@ display(pd.DataFrame(az.summary(race_idata)))
 print("\n--- Model Summary (Race Model) ---")
 display(pd.DataFrame(az.summary(race_idata)))
 ```
-@tbl-race-model-params displays information (mu_population, beta, p_unemployment) about the estimated posterior distribution over values of the race model's parameters.
+@tbl-race-model-params shows posterior distribution on train data including mu_population_log_odds, beta, p_unemployment
 
-```python
-# Chcek train posterior mean vs. mena of survey train data
-print(f'posterior_unemployment_mean on train data: {race_idata.posterior.p_unemployment.mean().values:.5f}')
-
-print(f'unemployment_mean on train data: {y_train.mean():.5f}')
-```
-
-```{python}
-# Chcek train posterior mean vs. mena of survey train data
-print(f'posterior_unemployment_mean on train data: {race_idata.posterior.p_unemployment.mean().values:.5f}')
-
-print(f'unemployment_mean on train data: {y_train.mean():.5f}')
-```
-
-The PGM posterior predictive unemployement mean on train data is very close to the calculated unemployment mean
 
 ```python
 # Trace plot
@@ -839,7 +824,23 @@ with unemployment_race_model:
     race_postpred_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
 display(pd.DataFrame(az.summary(race_postpred_idata)).head(10))
 ```
-@tbl-race-model-posterior-distribution shows a sample of posterior preditive distribution on train data
+@tbl-race-model-posterior-distribution shows a sample of posterior predictive means on train data
+
+```python
+# Chcek train posterior mean vs. mena of survey train data
+print(f"posterior_unemployment_mean on train data: {float(race_postpred_idata.posterior_predictive['unemployment'].mean().values):.6f}")
+
+print(f'unemployment_mean on train data: {y_train.mean():.6f}')
+```
+
+```{python}
+# Chcek train posterior mean vs. mena of survey train data
+print(f"posterior_unemployment_mean on train data: {float(race_postpred_idata.posterior_predictive['unemployment'].mean().values):.6f}")
+
+print(f'unemployment_mean on train data: {y_train.mean():.6f}')
+```
+
+The PGM posterior predictive unemployement mean on train data is very close to the calculated unemployment mean. Next we are testing with test data
 
 ### Race model - Extract Posterior Predictive Distribution on Test data
 
