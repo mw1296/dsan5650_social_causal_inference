@@ -92,7 +92,7 @@ display(df_dic['Race'].head(10).style.hide(axis='index').format({'Unemployment_r
 
 #list(df_dic.values())[0]
 ```
-Data from the U.S. Bureau of Labor Statistics (BLS) 2015 to 2025 monthly aggregated unemployment rate by races. This dataset is used to analyze the race effect on unemployment along with the monthly unemployment rate aggregated data by race (@tbl-monthly-unemployment-rate-race).
+Data from the U.S. Bureau of Labor Statistics (BLS) 2015 to 2025 monthly aggregated unemployment rate by races. This dataset is used to analyze the unemployment rate variations by race, which help define prior parameters for the predictions.  (@tbl-monthly-unemployment-rate-race).
 
 ```{python}
 # Data pre-processing - part2: Load and process monthly unemployment overall file
@@ -101,7 +101,7 @@ df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="
 ```
 
 ```{python}
-#| label: tbl-survey-data-jun2025
+#| label: tbl-survey-data-jun-jul-2025
 #| tbl-cap: "BLS June 2025 Labor Force Survey Data"
 #| tbl-col: true
 #| tbl-center: true
@@ -110,7 +110,9 @@ df_overall_long = df_overall.melt(id_vars="Year", var_name="Month", value_name="
 # process the survey data
 import numpy as np
 df_survey_jun = pd.read_csv("../data/survey_data/jun_2025.csv")
-df_survey_jun.columns= ["sex","education_attainment","race","age","employment_status",
+df_survey_jul = pd.read_csv("../data/survey_data/jul_2025.csv")
+df_survey_jun_jul = pd.concat([df_survey_jun, df_survey_jul], ignore_index = True)
+df_survey_jun_jul.columns= ["sex","education_attainment","race","age","employment_status",
                         "unmployment_duration","industry","occupation","industry_detailed",
                         "occupation_detailed"]
 ## create mapping tables to convert the demographic codes to the descriptions
@@ -184,32 +186,32 @@ industry_names = [
 industry_mapping = dict(zip(industry_codes, industry_names))
 
 ## Create new columns with decoded names
-df_survey_jun['sex_name'] = df_survey_jun['sex'].map(sex_mapping)
-df_survey_jun['race_name'] = df_survey_jun['race'].map(race_mapping)
-df_survey_jun['education_attainment_name'] = df_survey_jun['education_attainment'].map(education_attainment_mapping)
-df_survey_jun['employment_status_name'] = df_survey_jun['employment_status'].map(employment_status_mapping)
-df_survey_jun['industry_name'] = df_survey_jun['industry'].map(industry_mapping)
+df_survey_jun_jul['sex_name'] = df_survey_jun_jul['sex'].map(sex_mapping)
+df_survey_jun_jul['race_name'] = df_survey_jun_jul['race'].map(race_mapping)
+df_survey_jun_jul['education_attainment_name'] = df_survey_jun_jul['education_attainment'].map(education_attainment_mapping)
+df_survey_jun_jul['employment_status_name'] = df_survey_jun_jul['employment_status'].map(employment_status_mapping)
+df_survey_jun_jul['industry_name'] = df_survey_jun_jul['industry'].map(industry_mapping)
 
 ## Filter out industry_name na rows
-df_survey_jun = df_survey_jun[~df_survey_jun['industry_name'].isna()]
+df_survey_jun_jul = df_survey_jun_jul[~df_survey_jun_jul['industry_name'].isna()]
 
 ## Add columns "is_black" and "unemployment_status" for the binary model
-df_survey_jun['is_black_african'] = (df_survey_jun['race_name']=='black').astype(int)
+df_survey_jun_jul['is_black_african'] = (df_survey_jun_jul['race_name']=='black').astype(int)
 
 ## Add column is_asian for the binary model
-df_survey_jun['is_asian'] = (df_survey_jun['race_name']=='asian').astype(int)
+df_survey_jun_jul['is_asian'] = (df_survey_jun_jul['race_name']=='asian').astype(int)
 
 ## Add column is_asian for the binary model
-df_survey_jun['is_white'] = (df_survey_jun['race_name']=='white').astype(int)
+df_survey_jun_jul['is_white'] = (df_survey_jun_jul['race_name']=='white').astype(int)
 
 ## Add column employment_status for the binary model
-df_survey_jun['unemployment_status'] = (df_survey_jun['employment_status_name']=='unemployed').astype(int)
+df_survey_jun_jul['unemployment_status'] = (df_survey_jun_jul['employment_status_name']=='unemployed').astype(int)
 
 ## Display the table
-display(df_survey_jun.loc[:,[col for col in df_survey_jun.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
+display(df_survey_jun_jul.loc[:,[col for col in df_survey_jun_jul.columns if 'name' in col or col == 'is_black_african'  or col == 'is_white'  or col == 'is_asian']].head(10).style.hide(axis='index'))
 
 ```
-Data from the U.S. Bureau of Labor Statistics (BLS) June 2025 labor force survey provide individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data-jun2025). This dataset is used to sample and predict employment status using the observations in the survey data.
+We are using June and July 2025 data - the labor force survey result that provides individual-level employment status and corresponding demographic information. For the purpose of this study, a subset of these relevant columns is utilized (@tbl-survey-data-jun-jul-2025). This dataset is used to sample and predict employment status using the observations in the data.
 
 ```{python}
 #| label: tbl-survey-data-2024-2025
@@ -525,13 +527,15 @@ The overlayed smooth PDF curve on top of original data's histogram @fig-histogra
 weibull_fitted_mean_prob = 0.0435
 # Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
 population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+print(f"population mean log-odds: {population_mean_log_odds:.4f}")
 ```
 
 ```{python}
-### population unemployment mean probability from the fitted Weibull distribution
+# Population unemployment mean probability from the fitted Weibull distribution
 weibull_fitted_mean_prob = 0.0435
 # Convert the fitted mean probability to its log-odds equivalent in order to model binary outcome with logistic regression
 population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted_mean_prob))
+print(f"population mean log-odds: {population_mean_log_odds:.4f}")
 ```
 
 ### Define the prior means by races
@@ -639,50 +643,50 @@ with pm.Model() as unemployment_race_model:
     p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
     p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
 
-    # Likelihoods for observed data: use parameters like derived above to make predictions about the "true" probabilities of unemployment.
+    # Predict on observed data: use parameters above to predict probabilities of unemployment using June 2025 survey data.
 
-    # predict population mean
-    population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
-    population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
-    population_rates_obs = pm.Normal(
-        'population_rates_obs',
-        mu=mu_population_log_odds, 
-        sigma=sigma,
-        observed=population_rates_df['rate_logit'].values
-    )
+    # # predict population mean
+    # population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
+    # population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
+    # population_rates_obs = pm.Normal(
+    #     'population_rates_obs',
+    #     mu=mu_population_log_odds, 
+    #     sigma=sigma,
+    #     observed=population_rates_df['rate_logit'].values
+    # )
 
-    # predict black mean
-    black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
-    black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
-    black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
-    black_rates_obs = pm.Normal(
-        'black_rates_obs',
-        mu=mu_black_log_odds, 
-        sigma=sigma,
-        observed=black_rates_df['rate_logit'].values
-    )
+    # # predict black mean
+    # black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
+    # black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
+    # black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
+    # black_rates_obs = pm.Normal(
+    #     'black_rates_obs',
+    #     mu=mu_black_log_odds, 
+    #     sigma=sigma,
+    #     observed=black_rates_df['rate_logit'].values
+    # )
 
-    # predict asian mean
-    asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
-    asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
-    asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
-    asian_rates_obs = pm.Normal(
-        'asian_rates_obs',
-        mu=mu_asian_log_odds,
-        sigma=sigma,
-        observed=asian_rates_df['rate_logit'].values
-    )
+    # # predict asian mean
+    # asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
+    # asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
+    # asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
+    # asian_rates_obs = pm.Normal(
+    #     'asian_rates_obs',
+    #     mu=mu_asian_log_odds,
+    #     sigma=sigma,
+    #     observed=asian_rates_df['rate_logit'].values
+    # )
 
-    # predict white mean
-    white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
-    white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
-    white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
-    white_rates_obs = pm.Normal(
-        'white_rates_obs',
-        mu=mu_white_log_odds,
-        sigma=sigma,
-        observed=white_rates_df['rate_logit'].values
-    )
+    # # predict white mean
+    # white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
+    # white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
+    # white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
+    # white_rates_obs = pm.Normal(
+    #     'white_rates_obs',
+    #     mu=mu_white_log_odds,
+    #     sigma=sigma,
+    #     observed=white_rates_df['rate_logit'].values
+    # )
     
     # Assign the correct probability based on race
     p_individual_for_obs = pm.math.switch(
@@ -730,52 +734,52 @@ with pm.Model() as unemployment_race_model:
     p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
     p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
 
-    # Likelihoods for observed data: use parameters like derived above to make predictions about the "true" probabilities of unemployment.
+    # Predict on observed data: use parameters above to predict probabilities of unemployment using June 2025 survey data.
 
-    # predict population mean
-    population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
-    population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
-    population_rates_obs = pm.Normal(
-        'population_rates_obs',
-        mu=mu_population_log_odds, 
-        sigma=sigma,
-        observed=population_rates_df['rate_logit'].values
-    )
+    # # predict population mean
+    # population_rates_df = df_overall_long[~np.isnan(df_overall_long['Unemployment_rate'])]
+    # population_rates_df['rate_logit'] = np.log(population_rates_df['Unemployment_rate']*0.01/(1-population_rates_df['Unemployment_rate']*0.01))
+    # population_rates_obs = pm.Normal(
+    #     'population_rates_obs',
+    #     mu=mu_population_log_odds, 
+    #     sigma=sigma,
+    #     observed=population_rates_df['rate_logit'].values
+    # )
 
-    # predict black mean
-    black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
-    black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
-    black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
-    black_rates_obs = pm.Normal(
-        'black_rates_obs',
-        mu=mu_black_log_odds, 
-        sigma=sigma,
-        observed=black_rates_df['rate_logit'].values
-    )
+    # # predict black mean
+    # black_rates_df = df_dic['Race'][df_dic['Race']['Race']=='black_and_african']
+    # black_rates_df = black_rates_df[~np.isnan(black_rates_df['Unemployment_rate'])] 
+    # black_rates_df['rate_logit'] = np.log(black_rates_df['Unemployment_rate']*0.01/(1-black_rates_df['Unemployment_rate']*0.01))
+    # black_rates_obs = pm.Normal(
+    #     'black_rates_obs',
+    #     mu=mu_black_log_odds, 
+    #     sigma=sigma,
+    #     observed=black_rates_df['rate_logit'].values
+    # )
 
-    # predict asian mean
-    asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
-    asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
-    asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
-    asian_rates_obs = pm.Normal(
-        'asian_rates_obs',
-        mu=mu_asian_log_odds,
-        sigma=sigma,
-        observed=asian_rates_df['rate_logit'].values
-    )
+    # # predict asian mean
+    # asian_rates_df = df_dic['Race'][df_dic['Race']['Race']=='asian']
+    # asian_rates_df = asian_rates_df[~np.isnan(asian_rates_df['Unemployment_rate'])] 
+    # asian_rates_df['rate_logit'] = np.log(asian_rates_df['Unemployment_rate']*0.01/(1-asian_rates_df['Unemployment_rate']*0.01))
+    # asian_rates_obs = pm.Normal(
+    #     'asian_rates_obs',
+    #     mu=mu_asian_log_odds,
+    #     sigma=sigma,
+    #     observed=asian_rates_df['rate_logit'].values
+    # )
 
-    # predict white mean
-    white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
-    white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
-    white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
-    white_rates_obs = pm.Normal(
-        'white_rates_obs',
-        mu=mu_white_log_odds,
-        sigma=sigma,
-        observed=white_rates_df['rate_logit'].values
-    )
+    # # predict white mean
+    # white_rates_df = df_dic['Race'][df_dic['Race']['Race']=='white']
+    # white_rates_df = white_rates_df[~np.isnan(white_rates_df['Unemployment_rate'])] 
+    # white_rates_df['rate_logit'] = np.log(white_rates_df['Unemployment_rate']*0.01/(1-white_rates_df['Unemployment_rate']*0.01))
+    # white_rates_obs = pm.Normal(
+    #     'white_rates_obs',
+    #     mu=mu_white_log_odds,
+    #     sigma=sigma,
+    #     observed=white_rates_df['rate_logit'].values
+    # )
     
-    # Assign the correct probability based on race
+    # Assign the correct probability to p_individual based on race
     p_individual_for_obs = pm.math.switch(
         df_survey_jun['is_black_african'].values,
         p_black, # if is_black, use black prob
@@ -789,6 +793,8 @@ with pm.Model() as unemployment_race_model:
         'individual_status_obs',
         p=p_individual_for_obs,
         observed=df_survey_jun['unemployment_status'].values
+
+    employment_status_obs = pm.Data("employment_status_obs", y_train, dims="response_id")
     )
 ```
 
