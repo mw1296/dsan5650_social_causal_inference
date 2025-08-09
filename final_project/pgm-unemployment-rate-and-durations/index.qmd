@@ -573,6 +573,7 @@ for row in range(0,len(demographic_grid)):
     beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
     demographic_grid['beta_effect'][row] = beta_effect
 
+display(demographic_grid)
 ```
 
 ```{python}
@@ -609,7 +610,10 @@ for row in range(0,len(demographic_grid)):
     beta_effect = mean_prob_demographic(demographic_grid['df_name'][row], demographic_grid['demographic_type'][row], demographic_grid['demographic_description'][row])
     demographic_grid['beta_effect'][row] = beta_effect
 
+display(demographic_grid)
 ```
+
+The corresponding beta_effect for each of three races are shown in table above. These beta parameters are additive race effect parameter on population mean.
 
 ### Define the unemployment-race PyMC
 This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
