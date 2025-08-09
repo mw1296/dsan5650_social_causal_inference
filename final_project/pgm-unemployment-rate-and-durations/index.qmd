@@ -343,7 +343,7 @@ The boxplot illustrates notable variation in unemployment rates across industrie
 ## PGM
 We posit that unemployment vulnerability is driven by structural inequalities within the labor market, particularly those rooted in demographic and industrial dimensions. Demographic disparities are represented by variables such as race, age, and educational attainment and industry; sex is excluded from the analysis due to prior findings indicating minimal impact on unemployment rates. Establishing a baseline unemployment level is a necessary step before assessing the marginal effects of these demographic and industrial factors.
 
-### Baseline unemployment rate distribution 
+### Race model - Baseline unemployment rate distribution 
 Figure 3 illustrates that the population unemployment rate is right-skewed, suggesting that the Log-Normal distribution is an appropriate model. We are going to estimate the parameters of a Log-Normal distribution from the population distribution data using MLE. ($\sigma$, $\text{loc}$, and $\text{scale}$).
 
 ```{python}
@@ -521,7 +521,7 @@ display(weibull_stats_table.style.hide(axis="index"))
 
 The overlayed smooth PDF curve on top of original data's histogram @fig-histogram-weibull suggests that the Weibull distribution matches the distribution of the actual data. The results of the Weibull distribution, summarized in Table @tbl-weibull-params, including the shape, location, and scale parameters, along with the D-statistic, P-value, and fitted mean also proves Weibull distribution is a good fit, supported by a KS test p-value of 0.1173 (greater than 0.05). The estimated parameters (c=0.7093, loc=3.2000, scale=0.9204) align well with the spread of the data. Shape (c<1): Confirms the strong right-skewness of the data. Location (loc=3.2000): Indicates the distribution starts around 3.20, matching data's lower bound. Inferred Mean: The calculated mean of approximately 4.35 from these parameters is close but slightly higher than the data's actual mean of around 4, showing a good capture of central tendency.
 
-### Define the prior means for overall population
+###  Race model - Define the prior means for overall population
 ```python
 ### population unemployment mean probability from the fitted Weibull distribution
 weibull_fitted_mean_prob = 0.0435
@@ -538,7 +538,7 @@ population_mean_log_odds = np.log(weibull_fitted_mean_prob / (1 - weibull_fitted
 print(f"population mean log-odds: {population_mean_log_odds:.4f}")
 ```
 
-### Define the prior means by races
+###  Race model - Define the prior means by races
 ```python
 # Function to find the means of different demographics
 def mean_prob_demographic(df_name, demographic_type, demographic_description):
@@ -615,7 +615,7 @@ display(demographic_grid)
 
 The corresponding beta_effect for each of three races are shown in table above. These beta parameters are additive race effect parameter on population mean.
 
-### Train-test split
+###  Race model - Train-test split
 Before PyMC - Split survey data to train and test datasets in order to test the performance of the models
 
 ```python
@@ -628,7 +628,7 @@ from sklearn.model_selection import train_test_split
 train_df_survey, test_df_survey = train_test_split(df_survey_jun_jul, test_size=0.2, random_state=5650)
 ```
 
-### Define the unemployment-race PyMC
+###  Race model - Define the PyMC model
 This section sets up the Bayesian model to estimate the additive race effect relative to the fixed baseline.
 
 ```python
@@ -649,42 +649,23 @@ train_coords = {
 with pm.Model(coords=train_coords) as unemployment_race_model:
     # Prior of population mean log odds
     mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
-    
+        
     # Additive race effect parameter on population mean
     beta_black = pm.Normal('beta_black', mu=demographic_grid[demographic_grid['demographic_description']=='black_and_african']['beta_effect'], sigma=0.3) # Can be positive or negative
 
     beta_asian = pm.Normal('beta_asian', mu=demographic_grid[demographic_grid['demographic_description']=='asian']['beta_effect'], sigma=0.3) 
 
     beta_white = pm.Normal('beta_white', mu=demographic_grid[demographic_grid['demographic_description']=='white']['beta_effect'], sigma=0.3) 
-    
-    # noise
-    # sigma = pm.HalfNormal('sigma', sigma=0.2)
 
-    # log-odds and probabilities for each racial group
-    mu_white_log_odds = pm.Deterministic('mu_white_log_odds', mu_population_log_odds + beta_white)
-    mu_black_log_odds = pm.Deterministic('mu_black_log_odds', mu_population_log_odds + beta_black)
-    mu_asian_log_odds = pm.Deterministic('mu_asian_log_odds', mu_population_log_odds + beta_asian)
+    black_obs = pm.Data("black_obs", X_train['is_black_african'], dims="response_id")
+    white_obs = pm.Data("white_obs", X_train['is_white'], dims="response_id")
+    asian_obs = pm.Data("asian_obs", X_train['is_asian'], dims="response_id")
 
-    # p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
-    p_white = pm.Deterministic('p_white', pm.math.invlogit(mu_white_log_odds))
-    p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
-    p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
+    p_unemployment = pm.Deterministic("p_unemployment", pm.math.invlogit(mu_population_log_odds + beta_black * black_obs + beta_white * white_obs + beta_asian * asian_obs), dims = 'response_id')
 
-    
-    # Assign the correct probability to p_individual based on race
-    p_unemployment = pm.math.switch(
-        X_train['is_black_african'].values,
-        p_black, # if is_black, use black prob
-        pm.math.switch(
-            X_train['is_asian'].values, 
-            p_asian, # if is_asian, use asian prob
-            p_white # else, use white prob
-        )
-    )
+    unemployment_obs = pm.Data("unemployment_obs", y_train, dims="response_id")
 
-    unemployment_obs = pm.Data("employment_status_obs", y_train, dims="response_id")
-
-    unemployment = pm.Bernoulli("employment_status", p = p_unemployment, observed=unemployment_obs, dims="response_id")
+    unemployment = pm.Bernoulli("unemployment", p = p_unemployment, observed=unemployment_obs, dims="response_id")
 ```
 
 ```{python}
@@ -705,45 +686,26 @@ train_coords = {
 with pm.Model(coords=train_coords) as unemployment_race_model:
     # Prior of population mean log odds
     mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
-    
+        
     # Additive race effect parameter on population mean
     beta_black = pm.Normal('beta_black', mu=demographic_grid[demographic_grid['demographic_description']=='black_and_african']['beta_effect'], sigma=0.3) # Can be positive or negative
 
     beta_asian = pm.Normal('beta_asian', mu=demographic_grid[demographic_grid['demographic_description']=='asian']['beta_effect'], sigma=0.3) 
 
     beta_white = pm.Normal('beta_white', mu=demographic_grid[demographic_grid['demographic_description']=='white']['beta_effect'], sigma=0.3) 
-    
-    # noise
-    # sigma = pm.HalfNormal('sigma', sigma=0.2)
 
-    # log-odds and probabilities for each racial group
-    mu_white_log_odds = pm.Deterministic('mu_white_log_odds', mu_population_log_odds + beta_white)
-    mu_black_log_odds = pm.Deterministic('mu_black_log_odds', mu_population_log_odds + beta_black)
-    mu_asian_log_odds = pm.Deterministic('mu_asian_log_odds', mu_population_log_odds + beta_asian)
+    black_obs = pm.Data("black_obs", X_train['is_black_african'], dims="response_id")
+    white_obs = pm.Data("white_obs", X_train['is_white'], dims="response_id")
+    asian_obs = pm.Data("asian_obs", X_train['is_asian'], dims="response_id")
 
-    # p_population = pm.Deterministic('p_population', pm.math.invlogit(mu_population_log_odds))
-    p_white = pm.Deterministic('p_white', pm.math.invlogit(mu_white_log_odds))
-    p_black = pm.Deterministic('p_black', pm.math.invlogit(mu_black_log_odds))
-    p_asian = pm.Deterministic('p_asian', pm.math.invlogit(mu_asian_log_odds))
+    p_unemployment = pm.Deterministic("p_unemployment", pm.math.invlogit(mu_population_log_odds + beta_black * black_obs + beta_white * white_obs + beta_asian * asian_obs), dims = 'response_id')
 
-    
-    # Assign the correct probability to p_individual based on race
-    p_unemployment = pm.math.switch(
-        X_train['is_black_african'].values,
-        p_black, # if is_black, use black prob
-        pm.math.switch(
-            X_train['is_asian'].values, 
-            p_asian, # if is_asian, use asian prob
-            p_white # else, use white prob
-        )
-    )
+    unemployment_obs = pm.Data("unemployment_obs", y_train, dims="response_id")
 
-    unemployment_obs = pm.Data("employment_status_obs", y_train, dims="response_id")
-
-    unemployment = pm.Bernoulli("employment_status", p = p_unemployment, observed=unemployment_obs, dims="response_id")
+    unemployment = pm.Bernoulli("unemployment", p = p_unemployment, observed=unemployment_obs, dims="response_id")
 ```
 
-### Graph the unemployment-race PGM
+###  Race model - Graph PGM
 ```python
 pm.model_to_graphviz(unemployment_race_model)
 ```
@@ -752,7 +714,7 @@ pm.model_to_graphviz(unemployment_race_model)
 pm.model_to_graphviz(unemployment_race_model)
 ```
 
-### Fit the unemployment-race Model - Perform Sampling
+###  Race model - Estimate model parameters
 ```python
 print("Starting MCMC sampling...")
 with unemployment_race_model:
@@ -765,60 +727,77 @@ with unemployment_race_model:
     race_idata = pm.sample(random_seed=5650)
 ```
 
-### Analyze unemployment-race Results and Visualize
 ```python
 # Analyze Results and Visualize
-print("\n--- Model Summary (Race Unemployment) ---")
+print("\n--- Model Summary (Race Model) ---")
 display(pd.DataFrame(az.summary(race_idata)))
+```
 
+```{python}
+#| label: tbl-race-model-params
+#| tbl-cap: "Estimated Parameters of Race Model"
+#| tbl-col: true
+#| tbl-center: true
+
+# Posterior summary
+print("\n--- Model Summary (Race Model) ---")
+display(pd.DataFrame(az.summary(race_idata)))
+```
+@tbl-race-model-params displays information (mu_population, beta, p_unemployment) about the estimated posterior distribution over values of the race model's parameters.
+
+```{python}
+race_idata
+```
+
+
+```python
 # Trace plot
-fig_trace = az.plot_trace(indiv_trace)
+import matplotlib.pyplot as plt
+fig_trace = az.plot_trace(race_idata)
 plt.suptitle('Trace plot', fontsize=16)
 plt.subplots_adjust(hspace=0.5) 
 
 # Convert to DataFrame
-indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+race_post_df = race_idata.posterior.to_dataframe().reset_index()
 # Extract only the first chain
-indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+race_post_df = race_post_df[race_post_df['chain'] == 0]
 # Melt
-indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+race_post_df = race_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
 
 # Density plot
 import seaborn as sns
 import patchworklib as pw
 ax = pw.Brick(figsize=(4, 2.5));
 sns.kdeplot(
-    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    x="value", hue="variable", data=race_post_df, ax=ax,
     fill=True, bw_adjust=2,
 );
 ax.set_xlabel("Log-Odds Deviation from Overall Mean")
 ax.set_ylabel("Density")
 ax.set_title("Posterior Distribution of Race Effect Deviations")
+ax.savefig()
 ```
 
 ```{python}
-# Analyze Results and Visualize
-print("\n--- Model Summary (Simplified Model - Multiple Races) ---")
-display(pd.DataFrame(az.summary(indiv_trace, var_names=['mu_population_log_odds', 'beta_black', 'beta_asian', 'beta_white', 'sigma'])))
-
 # Trace plot
-fig_trace = az.plot_trace(indiv_trace)
+import matplotlib.pyplot as plt
+fig_trace = az.plot_trace(race_idata)
 plt.suptitle('Trace plot', fontsize=16)
 plt.subplots_adjust(hspace=0.5) 
 
 # Convert to DataFrame
-indiv_post_df = indiv_trace.posterior.to_dataframe().reset_index()
+race_post_df = race_idata.posterior.to_dataframe().reset_index()
 # Extract only the first chain
-indiv_post_df = indiv_post_df[indiv_post_df['chain'] == 0]
+race_post_df = race_post_df[race_post_df['chain'] == 0]
 # Melt
-indiv_post_df = indiv_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
+race_post_df = race_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
 
 # Density plot
 import seaborn as sns
 import patchworklib as pw
 ax = pw.Brick(figsize=(4, 2.5));
 sns.kdeplot(
-    x="value", hue="variable", data=indiv_post_df, ax=ax,
+    x="value", hue="variable", data=race_post_df, ax=ax,
     fill=True, bw_adjust=2,
 );
 ax.set_xlabel("Log-Odds Deviation from Overall Mean")
@@ -829,6 +808,57 @@ ax.savefig()
 ```
 
 The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
+
+### Race model - Generate Posterior Predictive Distribution for Training Data
+```python
+# posterior predictive distributions
+with unemployment_race_model:
+    race_postpred_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
+display(pd.DataFrame(az.summary(race_postpred_idata)).head(10))
+```
+
+```{python}
+#| label: tbl-race-model-posterior-distribution
+#| tbl-cap: "Posterior predictive distributions of Race Model"
+#| tbl-col: true
+#| tbl-center: true
+
+# posterior predictive distributions on train data
+with unemployment_race_model:
+    race_postpred_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
+display(pd.DataFrame(az.summary(race_postpred_idata)).head(10))
+```
+@tbl-race-model-posterior-distribution shows a sample of posterior preditive distribution on train data
+
+### Race model - Extract Posterior Predictive Distribution on Test data
+
+```python
+
+```
+
+```{python}
+# Update to test data
+test_coords = {
+    'response_id': X_test.index.values
+}
+with unemployment_race_model:
+    pm.set_data({"unemployment_obs": y_test,}, coords=test_coords)
+with unemployment_race_model:
+    race_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
+
+```
+
+```{python}
+# Extract means of sayhire values from the posterior predictive distribution given test data
+race_test_meanunemployment = nofeats_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+print(nofeats_test_meanhired.values)
+# Provided code step 2: Plot Test ROC curve
+nofeats_auc = plot_roc(y_test, nofeats_test_meanhired.values, "Test ROC: No Features")
+# Provided code step 3: Store the resulting AUC value in surv_model_aucs, and display the set of
+# AUCs we've computed thus far
+survey_model_aucs['nofeats'] = nofeats_auc
+survey_model_aucs
+```
 
 ### PGM for unemployment-industry
 
