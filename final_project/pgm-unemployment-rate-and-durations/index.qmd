@@ -888,7 +888,6 @@ print(race_test_meanunemployment.values)
 
 ### Race model - Plot predictive vs. unemployment rate in the test data
 ```python
-# Create scatter plot to visualize pred y vs. true y
 black_obs = race_test_idata.constant_data['black_obs'].values
 white_obs = race_test_idata.constant_data['white_obs'].values  
 asian_obs = race_test_idata.constant_data['asian_obs'].values
@@ -900,18 +899,30 @@ race_list = [
     for b, w, a in zip(black_obs, white_obs, asian_obs)
 ]
 
-fig, ax = plt.subplot(figsize = (10, 8))
-sns.scatterplot(
-    x = race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, # predictive unemployment rate
-    y = race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values,
-    hue=race_list, 
-    palette="Set1",
-    ax=ax
-)
+rate_df = pd.DataFrame({
+    'race_list': race_list, 
+    'y_predict': race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, 
+    'y_true': race_test_idata.observed_data['unemployment'].values
+    })
+race_rate_df = rate_df.groupby('race_list')[['y_predict','y_true']].mean().reset_index()
+race_rate_df_long = race_rate_df.melt(id_vars="race_list", var_name="y_label", value_name="unemployment_rate_mean")
+
+# Bar plot
+ax = pw.Brick(figsize=(6, 3))
+sns.barplot(
+    x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
+    alpha=0.9, ax=ax,
+    palette={"y_predict": "skyblue", "y_true": "blue"}
+);
+ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
 
 ```
 
 ```{python}
+#| label: fig-bar-race-model
+#| fig-cap: Bar Plot: Predictive Unemployment Rate vs. True Rate By Races
+#| fig-alt: Plot the unemployment rate means predicted by race PGM model and the survey results
+
 black_obs = race_test_idata.constant_data['black_obs'].values
 white_obs = race_test_idata.constant_data['white_obs'].values  
 asian_obs = race_test_idata.constant_data['asian_obs'].values
@@ -940,8 +951,9 @@ sns.barplot(
 );
 ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
 ax.savefig()
-
 ```
+The bar plot above (@fig-bar-race-model) demonstrates that the PGM race model predicts unemployment rates well. It accurately captures the highest unemployment rate for the Black race, closely matching the survey data. However, the model tends to overestimate the unemployment rate for the Asian group compared to the observed values.
+
 ### PGM for unemployment-industry
 
 ```python
