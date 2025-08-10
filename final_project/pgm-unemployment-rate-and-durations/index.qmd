@@ -954,7 +954,8 @@ ax.savefig()
 ```
 The bar plot above (@fig-bar-race-model) demonstrates that the PGM race model predicts unemployment rates well. It accurately captures the highest unemployment rate for the Black race, closely matching the survey data. However, the model tends to overestimate the unemployment rate for the Asian group compared to the observed values.
 
-### PGM for unemployment-industry
+
+### Industry model - Define priors
 
 ```python
 ## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
@@ -999,33 +1000,13 @@ def logit(p):
 ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
 ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
 
-## 3. Define the Adaptive pooling PyMC model
 # priors
 ur_by_industry_copy = ur_by_industry.copy()
 ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
 prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
 prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
-# Define the PGM model
-coords = {"industry": industry_names}
-with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
-    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
-    # Global Priors 
-    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
-    # Industry-Specific Parameters - observed industry means
-    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
-    alpha_industry = pm.Normal("alpha_industry", 
-                                mu=mu_alpha_industry, # historical industry means
-                                sigma=sigma,
-                                dims="industry")
-    # Probability of unemployment of each industry determined by alpha_industry
-    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
-    # Observed data - unemployment status
-    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
-                                            p=p_unemployment, 
-                                            observed=survey_df_industry['unemployment_status'].values,
-                                            dims="obs_id")
-```
 
+```
 
 ```{python}
 ## 1. Exclude some industries and persons "not in labor force" and industries that don't have historical unemployment stats
@@ -1070,32 +1051,65 @@ def logit(p):
 ur_by_industry['mean_ur_logit'] = logit(ur_by_industry['mean_ur']/100)
 ur_by_industry['sd_ur_logit'] = logit(ur_by_industry['sd_ur']/100)
 
-## 3. Define the Adaptive pooling PyMC model
 # priors
 ur_by_industry_copy = ur_by_industry.copy()
 ur_by_industry_copy = ur_by_industry_copy.set_index('Industry')
 prior_mu_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'mean_ur_logit'] for ind in industry_names])
 prior_sigma_alpha_vals = np.array([ur_by_industry_copy.loc[ind, 'sd_ur_logit'] for ind in industry_names])
+```
+
+### Industry model - Train-test split
+```python
+
+```
+
+```{python}
+
+```
+
+### Industry model - Define the Adaptive pooling PyMC model
+```python
 # Define the PGM model
 coords = {"industry": industry_names}
-with pm.Model(coords=coords) as adaptive_unemployment_industry_model:
-    industry_idx_obs = pm.Data("industry_idx_obs", survey_df_industry['industry_idx'].values, dims="obs_id")
+with pm.Model(coords=coords) as unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", industry_idx, dims="obs_id")
     # Global Priors 
     sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
     # Industry-Specific Parameters - observed industry means
     mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
     alpha_industry = pm.Normal("alpha_industry", 
-                                mu=mu_alpha_industry, # historical industry means
+                                mu=mu_alpha_industry, # historical industry means distribution
                                 sigma=sigma,
                                 dims="industry")
     # Probability of unemployment of each industry determined by alpha_industry
-    p_unemployment = pm.Deterministic("p_unemployment", pm.invlogit(alpha_industry[industry_idx_obs]))
+    p_unemployment = pm.Deterministic("p_unemployment", pm.math.invlogit(alpha_industry[industry_idx_obs]), dims='obs_id')
+    unemployment_obs = pm.Data("unemployment_obs", survey_df_industry['unemployment_status'].values, dims="obs_id")
     # Observed data - unemployment status
-    unemployment_status_observed = pm.Bernoulli("unemployment_status", 
-                                            p=p_unemployment, 
-                                            observed=survey_df_industry['unemployment_status'].values,
-                                            dims="obs_id")
+    unemployment = pm.Bernoulli("unemployment", p=p_unemployment, observed=unemployment_obs, dims="obs_id")
 ```
+
+```{python}
+# Define the PGM model
+coords = {"industry": industry_names}
+with pm.Model(coords=coords) as unemployment_industry_model:
+    industry_idx_obs = pm.Data("industry_idx_obs", industry_idx, dims="obs_id")
+    # Global Priors 
+    sigma = pm.Exponential("sigma", 1) # standard deviation for alpha_industry
+    # Industry-Specific Parameters - observed industry means
+    mu_alpha_industry = pm.Data("mu_alpha_industry", prior_mu_alpha_vals, dims="industry") # history industry means
+    alpha_industry = pm.Normal("alpha_industry", 
+                                mu=mu_alpha_industry, # historical industry means distribution
+                                sigma=sigma,
+                                dims="industry")
+    # Probability of unemployment of each industry determined by alpha_industry
+    p_unemployment = pm.Deterministic("p_unemployment", pm.math.invlogit(alpha_industry[industry_idx_obs]), dims='obs_id')
+    unemployment_obs = pm.Data("unemployment_obs", survey_df_industry['unemployment_status'].values, dims="obs_id")
+    # Observed data - unemployment status
+    unemployment = pm.Bernoulli("unemployment", p=p_unemployment, observed=unemployment_obs, dims="obs_id")
+```
+
+
+### Industry model - Visualize PGM
 
 ```python
 ## 4.Visualize the PGM
