@@ -845,6 +845,17 @@ The PGM posterior predictive unemployement mean on train data is very close to t
 ### Race model - Extract Posterior Predictive Distribution on Test data
 
 ```python
+# Update to test data
+test_coords = {
+    'response_id': X_test.index.values
+}
+with unemployment_race_model:
+    pm.set_data({"unemployment_obs": y_test,
+                 "black_obs": X_test['is_black_african'],
+                 "white_obs": X_test['is_white'],
+                 "asian_obs": X_test['is_asian']}, coords=test_coords)
+with unemployment_race_model:
+    race_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
 
 ```
 
@@ -854,24 +865,83 @@ test_coords = {
     'response_id': X_test.index.values
 }
 with unemployment_race_model:
-    pm.set_data({"unemployment_obs": y_test,}, coords=test_coords)
+    pm.set_data({"unemployment_obs": y_test,
+                 "black_obs": X_test['is_black_african'],
+                 "white_obs": X_test['is_white'],
+                 "asian_obs": X_test['is_asian']}, coords=test_coords)
 with unemployment_race_model:
-    race_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
+    race_test_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
+
+```
+
+```python
+# Extract means of unemployment values from the posterior predictive distribution given test data
+race_test_meanunemployment = race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+print(race_test_meanunemployment.values)
+```
+
+```{python}
+# Extract means of unemployment values from the posterior predictive distribution given test data
+race_test_meanunemployment = race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+print(race_test_meanunemployment.values)
+```
+
+### Race model - Plot predictive vs. unemployment rate in the test data
+```python
+# Create scatter plot to visualize pred y vs. true y
+black_obs = race_test_idata.constant_data['black_obs'].values
+white_obs = race_test_idata.constant_data['white_obs'].values  
+asian_obs = race_test_idata.constant_data['asian_obs'].values
+
+race_list = [
+    'black' if b == 1 else
+    'white' if w == 1 else
+    'asian' if a == 1 else None
+    for b, w, a in zip(black_obs, white_obs, asian_obs)
+]
+
+fig, ax = plt.subplot(figsize = (10, 8))
+sns.scatterplot(
+    x = race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, # predictive unemployment rate
+    y = race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values,
+    hue=race_list, 
+    palette="Set1",
+    ax=ax
+)
 
 ```
 
 ```{python}
-# Extract means of sayhire values from the posterior predictive distribution given test data
-race_test_meanunemployment = nofeats_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
-print(nofeats_test_meanhired.values)
-# Provided code step 2: Plot Test ROC curve
-nofeats_auc = plot_roc(y_test, nofeats_test_meanhired.values, "Test ROC: No Features")
-# Provided code step 3: Store the resulting AUC value in surv_model_aucs, and display the set of
-# AUCs we've computed thus far
-survey_model_aucs['nofeats'] = nofeats_auc
-survey_model_aucs
-```
+black_obs = race_test_idata.constant_data['black_obs'].values
+white_obs = race_test_idata.constant_data['white_obs'].values  
+asian_obs = race_test_idata.constant_data['asian_obs'].values
 
+race_list = [
+    'black' if b == 1 else
+    'white' if w == 1 else
+    'asian' if a == 1 else None
+    for b, w, a in zip(black_obs, white_obs, asian_obs)
+]
+
+rate_df = pd.DataFrame({
+    'race_list': race_list, 
+    'y_predict': race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, 
+    'y_true': race_test_idata.observed_data['unemployment'].values
+    })
+race_rate_df = rate_df.groupby('race_list')[['y_predict','y_true']].mean().reset_index()
+race_rate_df_long = race_rate_df.melt(id_vars="race_list", var_name="y_label", value_name="unemployment_rate_mean")
+
+# Bar plot
+ax = pw.Brick(figsize=(6, 3))
+sns.barplot(
+    x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
+    alpha=0.9, ax=ax,
+    palette={"y_predict": "skyblue", "y_true": "blue"}
+);
+ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
+ax.savefig()
+
+```
 ### PGM for unemployment-industry
 
 ```python
