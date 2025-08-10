@@ -915,7 +915,6 @@ sns.barplot(
     palette={"y_predict": "skyblue", "y_true": "blue"}
 );
 ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
-
 ```
 
 ```{python}
@@ -1313,8 +1312,100 @@ with unemployment_industry_model:
     industry_test_idata = pm.sample_posterior_predictive(industry_idata, random_seed=5650)
 ```
 
-### Industry model - Plot estimated means
+### Industry model - Plot predictive vs. unemployment rate in the test data
 
+```python
+# Extract means of unemployment values from the posterior predictive distribution given test data
+industry_test_meanunemployment = industry_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+
+# Add the predictive posterior means to the test dataframe
+ind_rate_df = test_df_industry_survey[['industry_name','unemployment_status']]
+ind_rate_df['unemployment_mean_pred'] = industry_test_meanunemployment
+ind_rate_df = ind_rate_df.groupby('industry_name').agg(
+    unemployment_mean_true = ('unemployment_status','mean'), unemployment_mean_pred = ('unemployment_mean_pred', 'mean')
+)
+```
+
+```{python}
+#| label: tbl-industry-posterior_predict-means
+#| tbl-cap: "Predicted vs. True Unemployment Means By Industries"
+#| tbl-col: true
+#| tbl-center: true
+
+# Extract means of unemployment values from the posterior predictive distribution given test data
+industry_test_meanunemployment = industry_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+
+# Add the predictive posterior means to the test dataframe
+ind_rate_df = test_df_industry_survey[['industry_name','unemployment_status']]
+ind_rate_df['unemployment_mean_pred'] = industry_test_meanunemployment
+ind_rate_df = ind_rate_df.groupby('industry_name').agg(
+    unemployment_mean_true = ('unemployment_status','mean'), unemployment_mean_pred = ('unemployment_mean_pred', 'mean')
+).reset_index()
+
+display(ind_rate_df)
+```
+@tbl-industry-posterior_predict-means displays the predicted vs. true unemployment rate means broken down by industries. Now we are going to visualize by scatter plot.
+
+```python
+# Scatter plot
+x = np.arange(len(ind_rate_df))
+fig, ax = plt.subplots(figsize = (10, 7))
+ax.scatter(
+    x,
+    ind_rate_df['unemployment_mean_pred'],
+    color = 'skyblue',
+    label = 'Predicted Unemploymenet Rate'
+)
+
+ax.scatter(
+    x,
+    ind_rate_df['unemployment_mean_true'],
+    color='blue',
+    label = 'True Unemployment Rate'
+)
+ax.set_xticks(x)
+ax.set_xticklabels(ind_rate_df['industry_name'],rotation=45, ha="right")
+
+ax.set_ylabel("Mean Unemployment Rate")
+ax.set_title("True vs Predicted Mean Unemployment by Industry", y = 1.02)
+ax.legend()
+
+plt.tight_layout()
+#plt.show()
+```
+
+```{python}
+#| label: fig-scatter-industry-unemployment
+#| fig-cap: Scatter Plot: Predictive Unemployment Rate vs. True Rate By Industries
+#| fig-alt: Plot the unemployment rate means predicted by industry PGM model and the survey results
+
+# Scatter plot
+x = np.arange(len(ind_rate_df))
+fig, ax = plt.subplots(figsize = (10, 7))
+ax.scatter(
+    x,
+    ind_rate_df['unemployment_mean_pred'],
+    color = 'skyblue',
+    label = 'Predicted Unemploymenet Rate'
+)
+
+ax.scatter(
+    x,
+    ind_rate_df['unemployment_mean_true'],
+    color='blue',
+    label = 'True Unemployment Rate'
+)
+ax.set_xticks(x)
+ax.set_xticklabels(ind_rate_df['industry_name'],rotation=45, ha="right")
+
+ax.set_ylabel("Mean Unemployment Rate")
+ax.set_title("True vs Predicted Mean Unemployment by Industry", y = 1.02)
+ax.legend()
+
+plt.tight_layout()
+plt.show()
+```
+The scatter plot (@fig-scatter-industry-unemployment) compares true and predicted unemployment rates for each industry. Most industries show close alignment between the two measures, indicating good predictive accuracy. Alghouth Leisure and hospitality and Information show slightly higher gaps, suggesting the model under- or overestimates unemployment rates. Industries such as Leisure and hospitality and Information exhibit the highest unemployment rates, both in true and predicted values. In contrast, Public administration and Educational and health services have the lowest unemployment rates, which is same as what is observed from the historical data. 
 
 ## References {.unnumbered}
 
