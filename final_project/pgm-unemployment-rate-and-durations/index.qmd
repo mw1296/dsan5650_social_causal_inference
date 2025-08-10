@@ -716,13 +716,13 @@ pm.model_to_graphviz(unemployment_race_model)
 
 ### Race model - Estimate model parameters
 ```python
-print("Starting MCMC sampling...")
+print("Starting Race Model Sampling...")
 with unemployment_race_model:
     race_idata = pm.sample(random_seed=5650)
 ```
 
 ```{python}
-print("Starting MCMC sampling...")
+print("Starting Race Model Sampling...")
 with unemployment_race_model:
     race_idata = pm.sample(random_seed=5650)
 ```
@@ -1128,70 +1128,74 @@ pm.model_to_graphviz(unemployment_industry_model)
 display(pm.model_to_graphviz(unemployment_industry_model))
 ```
 
+### Industry model - Estimate model parameters
 ```python
-## 5.MCMC sampling and prediction
-with adaptive_unemployment_industry_model:
-    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
-# Pring summary of the trace
-trace_alpha_summary = az.summary(
-    ur_industry_trace,
-    var_names=['alpha_industry'],
-    kind="stats", 
-    round_to=2
-)
-trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
-trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
-trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
-display(trace_alpha_summary)
+print("Starting Industry Model Sampling...")
+with unemployment_industry_model:
+    industry_idata = pm.sample(tune = 500, draws=500, random_seed=5650) # reduce the draws due to the size of the data
 ```
 
-
-
 ```{python}
-## 5.MCMC sampling and prediction
-with adaptive_unemployment_industry_model:
-    ur_industry_trace = pm.sample(tune = 500, draws=500, random_seed=5650)
+print("Starting Industry Model Sampling...")
+with unemployment_industry_model:
+    industry_idata = pm.sample(tune = 500, draws=500, random_seed=5650) # reduce the draws due to the size of the data
+```
+
+```python
+print("\n--- Model Summary (Industry Model) ---")
 # Pring summary of the trace
-trace_alpha_summary = az.summary(
-    ur_industry_trace,
+industry_idata_alpha_summary = az.summary(
+    industry_idata,
     var_names=['alpha_industry'],
     kind="stats", 
     round_to=2
 )
+industry_idata_alpha_summary['mean'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['mean'])) # convert logit to probability
+industry_idata_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_3%'])) # convert logit to probability
+industry_idata_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_97%'])) # convert logit to probability
+display(industry_idata_alpha_summary)
 ```
 
 ```{python}
 #| label: tbl-industry-trace-summary
-#| tbl-cap: "Summary of Posterior Distributions"
+#| tbl-cap: "Estimated Parameters of Industry Model"
 #| tbl-col: true
 #| tbl-center: true
 
-trace_alpha_summary['mean'] = 1 / (1 + np.exp(-trace_alpha_summary['mean'])) # convert logit to probability
-trace_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_3%'])) # convert logit to probability
-trace_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-trace_alpha_summary['hdi_97%'])) # convert logit to probability
-display(trace_alpha_summary)
+print("\n--- Model Summary (Industry Model) ---")
+# Pring summary of the trace
+industry_idata_alpha_summary = az.summary(
+    industry_idata,
+    var_names=['alpha_industry'],
+    kind="stats", 
+    round_to=2
+)
+industry_idata_alpha_summary['mean'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['mean'])) # convert logit to probability
+industry_idata_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_3%'])) # convert logit to probability
+industry_idata_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_97%'])) # convert logit to probability
+display(industry_idata_alpha_summary)
 ```
-
 The provided trace summary (@tbl-industry-trace-summary) details the posterior estimates for the alpha_industry parameters, which represent the estimated industry-specific parameters for unemployment probability. For example, 'Leisure and hospitality' has a mean of 0.056, while 'Public administration' has a mean of 0.018. The sd, hdi_3% and hdi_97% are consistently quite narrow across all industries, (e.g., 'Leisure and hospitality' from 0.055 to 0.059, a range of 0.004). This indicates a strong concentration of posterior probability around the mean estimates.
 
 
 ```python
 # Posterior mean
-ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
-ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
-ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
-ur_industry_post_mean.to_dataframe()
-ur_industry_post_hdi = az.hdi(ur_industry_trace)
-ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)
-ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
-ur_industry_post_hdi_iter.to_dataframe()
+industry_idata_post_mean = industry_idata.posterior.mean(dim=("chain", "draw"))
+industry_idata_post_mean_iter = industry_idata_post_mean.sortby("alpha_industry")
+industry_idata_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-industry_idata_post_mean_iter['alpha_industry']))
+industry_idata_post_mean.to_dataframe()
+industry_idata_post_mean_hdi = az.hdi(industry_idata)
+industry_idata_post_mean_hdi_iter = industry_idata_post_mean_hdi.sortby(industry_idata_post_mean_iter.alpha_industry)
+industry_idata_post_mean_hdi_iter['alpha_prob']=1 / (1 + np.exp(-industry_idata_post_mean_hdi_iter['alpha_industry']))
+industry_idata_post_mean_hdi_iter.to_dataframe()
+
 # Plot the posterior alpha_industry (mean of unemployment)
 fig, ax = plt.subplots(figsize=(10, 8))
-ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
+industry_idata_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
 ax.vlines(
     np.arange(industry_names.size),
-    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="lower"),
-    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="higher"),
+    industry_idata_post_mean_hdi_iter.alpha_prob.sel(hdi="lower"),
+    industry_idata_post_mean_hdi_iter.alpha_prob.sel(hdi="higher"),
     color="orange",
     alpha=0.6,
     linewidth=3
@@ -1210,22 +1214,23 @@ plt.show()
 #| fig-cap: Estimated Industry-Specific Unemployment Rate (Adaptive Pooliing)
 #| fig-alt: Plot the scatter plot of the estimated unemployment rates by industries
 
+industry_idata_post_mean = industry_idata.posterior.mean(dim=("chain", "draw"))
+industry_idata_post_mean_iter = industry_idata_post_mean.sortby("alpha_industry")
+industry_idata_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-industry_idata_post_mean_iter['alpha_industry']))
+industry_idata_post_mean.to_dataframe()
+industry_idata_post_mean_hdi = az.hdi(industry_idata)
+industry_idata_post_mean_hdi_iter = industry_idata_post_mean_hdi.sortby(industry_idata_post_mean_iter.alpha_industry)
+industry_idata_post_mean_hdi_iter['alpha_prob']=1 / (1 + np.exp(-industry_idata_post_mean_hdi_iter['alpha_industry']))
+industry_idata_post_mean_hdi_iter.to_dataframe()
+
 # Posterior mean
-ur_industry_post_mean = ur_industry_trace.posterior.mean(dim=("chain", "draw"))
-ur_industry_post_mean_iter = ur_industry_post_mean.sortby("alpha_industry")
-ur_industry_post_mean_iter['alpha_prob'] = 1 / (1 + np.exp(-ur_industry_post_mean_iter['alpha_industry']))
-ur_industry_post_mean.to_dataframe()
-ur_industry_post_hdi = az.hdi(ur_industry_trace)
-ur_industry_post_hdi_iter = ur_industry_post_hdi.sortby(ur_industry_post_mean_iter.alpha_industry)
-ur_industry_post_hdi_iter['alpha_prob']=1 / (1 + np.exp(-ur_industry_post_hdi_iter['alpha_industry']))
-ur_industry_post_hdi_iter.to_dataframe()
 # Plot the posterior alpha_industry (mean of unemployment)
 fig, ax = plt.subplots(figsize=(10, 8))
-ur_industry_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
+industry_idata_post_mean_iter.plot.scatter(x='industry', y="alpha_prob", ax=ax, alpha=0.8, s=80)
 ax.vlines(
     np.arange(industry_names.size),
-    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="lower"),
-    ur_industry_post_hdi_iter.alpha_prob.sel(hdi="higher"),
+    industry_idata_post_mean_hdi_iter.alpha_prob.sel(hdi="lower"),
+    industry_idata_post_mean_hdi_iter.alpha_prob.sel(hdi="higher"),
     color="orange",
     alpha=0.6,
     linewidth=3
