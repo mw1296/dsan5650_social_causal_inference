@@ -1608,7 +1608,7 @@ with pm.Model(coords=coords) as age_education_model:
     beta_recent_graduate_master = pm.Normal("beta_recent_graduate_master", 0, 1)
 
     # p_unemployment determined by variables
-    p_unemployment = pm.Deterministic("p_sayhire", pm.math.invlogit(mu_population_log_odds + beta_bachelor * bachelors_obs + beta_master * masters_obs + beta_recent_graduate * recent_graduate_obs + beta_recent_graduate_bachelor * recent_graduate_obs * bachelors_obs + beta_recent_graduate_master * masters_obs * recent_graduate_obs ), dims = 'response_id')
+    p_unemployment = pm.Deterministic("p_unemployment", pm.math.invlogit(mu_population_log_odds + beta_bachelor * bachelors_obs + beta_master * masters_obs + beta_recent_graduate * recent_graduate_obs + beta_recent_graduate_bachelor * recent_graduate_obs * bachelors_obs + beta_recent_graduate_master * masters_obs * recent_graduate_obs ), dims = 'response_id')
     # unemployment
     unemployment_obs = pm.Data("unemployment_obs", y_train_ae, dims="response_id")
     unemployment = pm.Bernoulli("unemployment", p = p_unemployment, observed=unemployment_obs, dims="response_id")
@@ -1649,7 +1649,7 @@ display(pd.DataFrame(az.summary(ae_idata)))
 #| tbl-center: true
 
 # Posterior summary
-print("\n--- Model Summary (Race Model) ---")
+print("\n--- Model Summary (Recent Graduate - Education Model) ---")
 display(pd.DataFrame(az.summary(ae_idata)))
 ```
 @tbl-recent-graduate-education-model-params shows posterior distribution on train data including mu_population_log_odds, beta, p_unemployment
