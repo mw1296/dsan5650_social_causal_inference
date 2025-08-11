@@ -1422,52 +1422,13 @@ plt.show()
 ```
 The scatter plot (@fig-scatter-industry-unemployment) compares true and predicted unemployment rates for each industry. Most industries show close alignment between the two measures, indicating good predictive accuracy. Alghouth Leisure and hospitality and Information show slightly higher gaps, suggesting the model under- or overestimates unemployment rates. Industries such as Leisure and hospitality and Information exhibit the highest unemployment rates, both in true and predicted values. In contrast, Public administration and Educational and health services have the lowest unemployment rates, which is same as what is observed from the historical data. 
 
+Finally, we are analyzing the difference of the unemployment between recent gradatues and non recent graduates, and its interactive effect with education_attainment.
 
 ### Age_Education model - Survey data of age, education attainment and employment status
 Create df_age_education using 2025 year to date survey data
 
 ```python
 survey_file_names = ['jan_2025.csv', 'feb_2025.csv', 'mar_2025.csv', 'apr_2025.csv', 'may_2025.csv', 'jun_2025.csv', 'jul_2025.csv']
-cols = ['peeduca', 'prtage', 'pemlr'] # keep columns age, education_attainment and employment_status
-survey_df_age_education = []
-for s in survey_file_names:
-    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s))
-    survey_data_maytojul = survey_file[cols]
-    survey_data_maytojul.columns=['education_attainment', 'age', 'employment_status']
-    survey_data_maytojul['month_year'] = s
-    survey_df_age_education.append(survey_data_maytojul)
-
-# Combine all into a single DataFrame
-survey_df_age_education = pd.concat(survey_df_age_education, ignore_index=True)
-
-# Exclude observations with age less than 22
-survey_df_age_education = survey_df_age_education[survey_df_age_education['age']>=22]
-
-# Decode the columns
-survey_df_age_education['age_group'] = np.where(
-    (survey_df_age_education['age']>=22) & (survey_df_age_education['age']<=25), '22-25', '26+')
-
-survey_df_age_education['education_attainment_description'] = survey_df_age_education['education_attainment'].map(education_attainment_mapping)
-
-survey_df_age_education['education_attainment_group'] = np.where(
-    (survey_df_age_education['education_attainment_description'] == 'doctoral_degree') |
-    (survey_df_age_education['education_attainment_description'] == 'masters_degree'),
-    'masters or higher',
-    (survey_df_age_education['education_attainment_description'] == 'bachelors_degree'),
-    'bachelors',
-    'lower than bachelors'
-)
-
-survey_df_age_education['employment_status_description'] = survey_df_age_education['employment_status'].map(employment_status_mapping)
-```
-
-```{python}
-#| label: tbl-age-education
-#| tbl-cap: "Survey data of May through Jul 2025 that contains education attainment, age and unemployment status"
-#| tbl-col: true
-#| tbl-center: true
-
-survey_file_names = ['may_2025.csv', 'jun_2025.csv', 'jul_2025.csv']
 cols = ['peeduca', 'prtage', 'pemlr'] # keep columns age, education_attainment and employment_status
 survey_df_age_education = []
 for s in survey_file_names:
@@ -1520,8 +1481,155 @@ survey_df_age_education['is_recent_graduate'] = (survey_df_age_education['age_gr
 
 survey_df_age_education['isnot_recent_graduate'] = (survey_df_age_education['age_group']=='26+').astype(int)
 
+```
+
+```{python}
+#| label: tbl-age-education
+#| tbl-cap: "Survey data of May through Jul 2025 that contains education attainment, age and unemployment status"
+#| tbl-col: true
+#| tbl-center: true
+
+survey_file_names = ['jan_2025.csv', 'feb_2025.csv', 'mar_2025.csv', 'apr_2025.csv', 'may_2025.csv', 'jun_2025.csv', 'jul_2025.csv']
+cols = ['peeduca', 'prtage', 'pemlr'] # keep columns age, education_attainment and employment_status
+survey_df_age_education = []
+for s in survey_file_names:
+    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s))
+    survey_data_maytojul = survey_file[cols]
+    survey_data_maytojul.columns=['education_attainment', 'age', 'employment_status']
+    survey_data_maytojul['month_year'] = s
+    survey_df_age_education.append(survey_data_maytojul)
+
+# Combine all into a single DataFrame
+survey_df_age_education = pd.concat(survey_df_age_education, ignore_index=True)
+
+# Exclude observations with age less than 22
+survey_df_age_education = survey_df_age_education[survey_df_age_education['age']>=22]
+
+
+# Decode the columns
+survey_df_age_education['age_group'] = np.where(
+    (survey_df_age_education['age']>=22) & (survey_df_age_education['age']<=25), '22-25', '26+')
+
+survey_df_age_education['education_attainment_description'] = survey_df_age_education['education_attainment'].map(education_attainment_mapping)
+
+# Exclude observations with doctoral degree since 22-25 age is quite unlikely to receive doctoral degree
+survey_df_age_education = survey_df_age_education[survey_df_age_education['education_attainment_description']!='doctoral_degree']
+
+survey_df_age_education['education_attainment_group'] = np.where(
+    survey_df_age_education['education_attainment_description'] == 'masters_degree',
+    'masters',
+    np.where(
+        survey_df_age_education['education_attainment_description'] == 'bachelors_degree',
+        'bachelors',
+        'lower than bachelors'
+    )
+)
+
+survey_df_age_education['employment_status_description'] = survey_df_age_education['employment_status'].map(employment_status_mapping)
+
+# Exclude observations not in labor force
+survey_df_age_education = survey_df_age_education[survey_df_age_education['employment_status_description'] !='not in labor force']
+
+survey_df_age_education['unemployment_status'] = survey_df_age_education['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+survey_df_age_education['is_bachelors'] = (survey_df_age_education['education_attainment_group']=='bachelors').astype(int)
+
+survey_df_age_education['is_masters'] = (survey_df_age_education['education_attainment_group']=='masters').astype(int)
+
+survey_df_age_education['is_lower_than_bachelors'] = (survey_df_age_education['education_attainment_group']=='lower than bachelors').astype(int)
+
+survey_df_age_education['is_recent_graduate'] = (survey_df_age_education['age_group']=='22-25').astype(int)
+
 display(survey_df_age_education.head(10).style.hide(axis='index'))
 ```
+
+### Age_education model - train-test split
+```python
+# train-test split
+train_df_age_education, test_df_age_education = train_test_split(survey_df_age_education, test_size=0.2, random_state = 5650)
+
+X_train_ae = train_df_age_education[['is_bachelors', 'is_masters', 'is_lower_than_bachelors',	'is_recent_graduate']]
+
+y_train_ae = train_df_age_education['unemployment_status']
+
+X_test_ae = test_df_age_education[['is_bachelors', 'is_masters', 'is_lower_than_bachelors',	'is_recent_graduate']]
+
+y_test_ae = test_df_age_education['unemployment_status']
+```
+
+```{python}
+# train-test split
+train_df_age_education, test_df_age_education = train_test_split(survey_df_age_education, test_size=0.2, random_state = 5650)
+
+X_train_ae = train_df_age_education[['is_bachelors', 'is_masters', 'is_lower_than_bachelors',	'is_recent_graduate']]
+
+y_train_ae = train_df_age_education['unemployment_status']
+
+X_test_ae = test_df_age_education[['is_bachelors', 'is_masters', 'is_lower_than_bachelors',	'is_recent_graduate']]
+
+y_test_ae = test_df_age_education['unemployment_status']
+```
+
+### Age_education model - define the multivariate model
+
+```python
+coords = {'response_id': X_train_ae.index.values}
+with pm.Model(coords=coords) as age_education_model:
+    recent_graduate_obs = pm.Data("recent_graduate_obs", X_train_ae['is_recent_graduate'], dims="response_id")
+    bachelors_obs = pm.Data('is_bachelors_obs', X_train_ae['is_bachelors'], dims='response_id')
+    masters_obs = pm.Data('is_masters_obs', X_train_ae['is_masters'], dims='response_id')
+    lower_than_bachelors_obs = pm.Data('is_lower_than_bachelors_obs', X_train_ae['is_lower_than_bachelors'], dims='response_id')
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
+    beta_bachelor = pm.Normal("beta_bachelor", 0, 1) 
+    # Beta of degrees and recent_graduate variables
+    beta_master = pm.Normal("beta_master", 0, 1)
+    beta_lower_than_bachelor = pm.Normal("beta_lower_than_bachelor", 0, 1)
+    beta_recent_graduate = pm.Normal("beta_recent_graduate", 0, 1)
+    beta_recent_graduate_bachelor = pm.Normal("beta_recent_graduate_bachelor", 0, 1)
+    beta_recent_graduate_master = pm.Normal("beta_recent_graduate_master", 0, 1)
+    beta_recent_graduate_lower_than_bachelor = pm.Normal("beta_recent_graduate_lower_than_bachelor", 0, 1)
+    # p_unemployment determined by variables
+    p_unemployment = pm.Deterministic("p_sayhire", pm.math.invlogit(mu_population_log_odds + beta_bachelor * bachelors_obs + beta_master * masters_obs + beta_lower_than_bachelor * lower_than_bachelors_obs + beta_recent_graduate * recent_graduate_obs + beta_recent_graduate_bachelor * recent_graduate_obs * bachelors_obs + beta_recent_graduate_master * masters_obs * recent_graduate_obs + beta_recent_graduate_lower_than_bachelor * lower_than_bachelors_obs * recent_graduate_obs), dims = 'response_id')
+    # unemployment
+    unemployment_obs = pm.Data("unemployment_obs", y_train, dims="response_id")
+    unemployment = pm.Bernoulli("unemployment", p = p_unemployment, observed=unemployment_obs, dims="response_id")
+```
+
+```{python}
+coords = {'response_id': X_train_ae.index.values}
+with pm.Model(coords=coords) as age_education_model:
+    recent_graduate_obs = pm.Data("recent_graduate_obs", X_train_ae['is_recent_graduate'], dims="response_id")
+    bachelors_obs = pm.Data('is_bachelors_obs', X_train_ae['is_bachelors'], dims='response_id')
+    masters_obs = pm.Data('is_masters_obs', X_train_ae['is_masters'], dims='response_id')
+    lower_than_bachelors_obs = pm.Data('is_lower_than_bachelors_obs', X_train_ae['is_lower_than_bachelors'], dims='response_id')
+    # Prior of population mean log odds
+    mu_population_log_odds = pm.Normal('mu_population_log_odds', mu=population_mean_log_odds, sigma=0.5)
+    beta_bachelor = pm.Normal("beta_bachelor", 0, 1) 
+    # Beta of degrees and recent_graduate variables
+    beta_master = pm.Normal("beta_master", 0, 1)
+    beta_lower_than_bachelor = pm.Normal("beta_lower_than_bachelor", 0, 1)
+    beta_recent_graduate = pm.Normal("beta_recent_graduate", 0, 1)
+    beta_recent_graduate_bachelor = pm.Normal("beta_recent_graduate_bachelor", 0, 1)
+    beta_recent_graduate_master = pm.Normal("beta_recent_graduate_master", 0, 1)
+    beta_recent_graduate_lower_than_bachelor = pm.Normal("beta_recent_graduate_lower_than_bachelor", 0, 1)
+    # p_unemployment determined by variables
+    p_unemployment = pm.Deterministic("p_sayhire", pm.math.invlogit(mu_population_log_odds + beta_bachelor * bachelors_obs + beta_master * masters_obs + beta_lower_than_bachelor * lower_than_bachelors_obs + beta_recent_graduate * recent_graduate_obs + beta_recent_graduate_bachelor * recent_graduate_obs * bachelors_obs + beta_recent_graduate_master * masters_obs * recent_graduate_obs + beta_recent_graduate_lower_than_bachelor * lower_than_bachelors_obs * recent_graduate_obs), dims = 'response_id')
+    # unemployment
+    unemployment_obs = pm.Data("unemployment_obs", y_train, dims="response_id")
+    unemployment = pm.Bernoulli("unemployment", p = p_unemployment, observed=unemployment_obs, dims="response_id")
+```
+
+### Age_education model - Graph PGM
+```python
+pm.model_to_graphviz(age_education_model)
+```
+
+```{python}
+pm.model_to_graphviz(age_education_model)
+```
+
+### Age_education model - Estimate model parameters
 
 
 ## References {.unnumbered}
