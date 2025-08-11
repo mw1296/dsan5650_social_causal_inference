@@ -1654,6 +1654,52 @@ display(pd.DataFrame(az.summary(ae_idata)))
 ```
 @tbl-recent-graduate-education-model-params shows posterior distribution on train data including mu_population_log_odds, beta, p_unemployment
 
+### Recent Graduate - Education model - Extract Posterior Predictive Distribution on Test data
+
+```python
+# Update to test data
+test_coords = {
+    'response_id': X_test_ae.index.values
+}
+with age_education_model:
+    pm.set_data({"unemployment_obs": y_test_ae,
+                 "is_bachelors_obs": X_test_ae['is_bachelors'],
+                 "is_masters_obs": X_test_ae['is_masters'],
+                 "recent_graduate_obs": X_test_ae['is_recent_graduate']},
+                 coords=test_coords)
+
+with age_education_model:
+    ae_test_idata = pm.sample_posterior_predictive(ae_idata, random_seed=5650)
+```
+
+```{python}
+# Update to test data
+test_coords = {
+    'response_id': X_test_ae.index.values
+}
+with age_education_model:
+    pm.set_data({"unemployment_obs": y_test_ae,
+                 "is_bachelors_obs": X_test_ae['is_bachelors'],
+                 "is_masters_obs": X_test_ae['is_masters'],
+                 "recent_graduate_obs": X_test_ae['is_recent_graduate']},
+                 coords=test_coords)
+
+with age_education_model:
+    ae_test_idata = pm.sample_posterior_predictive(ae_idata, random_seed=5650)
+```
+
+```python
+# Extract means of unemployment values from the posterior predictive distribution given test data
+ae_test_meanunemployment = ae_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+print(ae_test_meanunemployment.values)
+```
+
+```{python}
+# Extract means of unemployment values from the posterior predictive distribution given test data
+ae_test_meanunemployment = ae_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
+print(ae_test_meanunemployment.values)
+```
+
 ## References {.unnumbered}
 
 ::: {#refs}
