@@ -116,11 +116,14 @@ df_survey_jun_jul.columns= ["sex","education_attainment","race","age","employmen
                         "unmployment_duration","industry","occupation","industry_detailed",
                         "occupation_detailed"]
 ## create mapping tables to convert the demographic codes to the descriptions
+
+# sex mapping
 sex_mapping = {
         1: "male",
         2: "female"
 }
 
+# education attainment mapping
 education_attainment_codes = list(np.arange(31,47))
 education_attainment_values = [
         'less_than_high_school',
@@ -142,6 +145,7 @@ education_attainment_values = [
     ]    
 education_attainment_mapping=dict(zip(education_attainment_codes,education_attainment_values))
 
+# race mapping
 race_codes = list(np.arange(1,27))
 race_values = [
         "white",
@@ -151,7 +155,17 @@ race_values = [
     ] + ["other"] * 22
 race_mapping= dict(zip(race_codes, race_values))
 
+# age mapping
+race_codes = list(np.arange(1,27))
+race_values = [
+        "white",
+        "black",
+        "other",
+        "asian"
+    ] + ["other"] * 22
+race_mapping= dict(zip(race_codes, race_values))
 
+# employment status mapping
 employment_status_codes =[
         1,2,3,4,5,6,7
     ]
@@ -166,6 +180,7 @@ employment_status_names = [
     ]
 employment_status_mapping = dict(zip(employment_status_codes,employment_status_names))
 
+# industry name mapping
 industry_codes = list(np.arange(1,15))
 industry_names = [
     "Agriculture, forestry, fishing, and hunting",
@@ -1406,6 +1421,108 @@ plt.tight_layout()
 plt.show()
 ```
 The scatter plot (@fig-scatter-industry-unemployment) compares true and predicted unemployment rates for each industry. Most industries show close alignment between the two measures, indicating good predictive accuracy. Alghouth Leisure and hospitality and Information show slightly higher gaps, suggesting the model under- or overestimates unemployment rates. Industries such as Leisure and hospitality and Information exhibit the highest unemployment rates, both in true and predicted values. In contrast, Public administration and Educational and health services have the lowest unemployment rates, which is same as what is observed from the historical data. 
+
+
+### Age_Education model - Survey data of age, education attainment and employment status
+Create df_age_education using 2025 year to date survey data
+
+```python
+survey_file_names = ['jan_2025.csv', 'feb_2025.csv', 'mar_2025.csv', 'apr_2025.csv', 'may_2025.csv', 'jun_2025.csv', 'jul_2025.csv']
+cols = ['peeduca', 'prtage', 'pemlr'] # keep columns age, education_attainment and employment_status
+survey_df_age_education = []
+for s in survey_file_names:
+    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s))
+    survey_data_maytojul = survey_file[cols]
+    survey_data_maytojul.columns=['education_attainment', 'age', 'employment_status']
+    survey_data_maytojul['month_year'] = s
+    survey_df_age_education.append(survey_data_maytojul)
+
+# Combine all into a single DataFrame
+survey_df_age_education = pd.concat(survey_df_age_education, ignore_index=True)
+
+# Exclude observations with age less than 22
+survey_df_age_education = survey_df_age_education[survey_df_age_education['age']>=22]
+
+# Decode the columns
+survey_df_age_education['age_group'] = np.where(
+    (survey_df_age_education['age']>=22) & (survey_df_age_education['age']<=25), '22-25', '26+')
+
+survey_df_age_education['education_attainment_description'] = survey_df_age_education['education_attainment'].map(education_attainment_mapping)
+
+survey_df_age_education['education_attainment_group'] = np.where(
+    (survey_df_age_education['education_attainment_description'] == 'doctoral_degree') |
+    (survey_df_age_education['education_attainment_description'] == 'masters_degree'),
+    'masters or higher',
+    (survey_df_age_education['education_attainment_description'] == 'bachelors_degree'),
+    'bachelors',
+    'lower than bachelors'
+)
+
+survey_df_age_education['employment_status_description'] = survey_df_age_education['employment_status'].map(employment_status_mapping)
+```
+
+```{python}
+#| label: tbl-age-education
+#| tbl-cap: "Survey data of May through Jul 2025 that contains education attainment, age and unemployment status"
+#| tbl-col: true
+#| tbl-center: true
+
+survey_file_names = ['may_2025.csv', 'jun_2025.csv', 'jul_2025.csv']
+cols = ['peeduca', 'prtage', 'pemlr'] # keep columns age, education_attainment and employment_status
+survey_df_age_education = []
+for s in survey_file_names:
+    survey_file = pd.read_csv(os.path.join('../data/survey_data/', s))
+    survey_data_maytojul = survey_file[cols]
+    survey_data_maytojul.columns=['education_attainment', 'age', 'employment_status']
+    survey_data_maytojul['month_year'] = s
+    survey_df_age_education.append(survey_data_maytojul)
+
+# Combine all into a single DataFrame
+survey_df_age_education = pd.concat(survey_df_age_education, ignore_index=True)
+
+# Exclude observations with age less than 22
+survey_df_age_education = survey_df_age_education[survey_df_age_education['age']>=22]
+
+
+# Decode the columns
+survey_df_age_education['age_group'] = np.where(
+    (survey_df_age_education['age']>=22) & (survey_df_age_education['age']<=25), '22-25', '26+')
+
+survey_df_age_education['education_attainment_description'] = survey_df_age_education['education_attainment'].map(education_attainment_mapping)
+
+# Exclude observations with doctoral degree since 22-25 age is quite unlikely to receive doctoral degree
+survey_df_age_education = survey_df_age_education[survey_df_age_education['education_attainment_description']!='doctoral_degree']
+
+survey_df_age_education['education_attainment_group'] = np.where(
+    survey_df_age_education['education_attainment_description'] == 'masters_degree',
+    'masters',
+    np.where(
+        survey_df_age_education['education_attainment_description'] == 'bachelors_degree',
+        'bachelors',
+        'lower than bachelors'
+    )
+)
+
+survey_df_age_education['employment_status_description'] = survey_df_age_education['employment_status'].map(employment_status_mapping)
+
+# Exclude observations not in labor force
+survey_df_age_education = survey_df_age_education[survey_df_age_education['employment_status_description'] !='not in labor force']
+
+survey_df_age_education['unemployment_status'] = survey_df_age_education['employment_status_description'].map({'employed': 0, 'unemployed': 1})
+
+survey_df_age_education['is_bachelors'] = (survey_df_age_education['education_attainment_group']=='bachelors').astype(int)
+
+survey_df_age_education['is_masters'] = (survey_df_age_education['education_attainment_group']=='masters').astype(int)
+
+survey_df_age_education['is_lower_than_bachelors'] = (survey_df_age_education['education_attainment_group']=='lower than bachelors').astype(int)
+
+survey_df_age_education['is_recent_graduate'] = (survey_df_age_education['age_group']=='22-25').astype(int)
+
+survey_df_age_education['isnot_recent_graduate'] = (survey_df_age_education['age_group']=='26+').astype(int)
+
+display(survey_df_age_education.head(10).style.hide(axis='index'))
+```
+
 
 ## References {.unnumbered}
 
