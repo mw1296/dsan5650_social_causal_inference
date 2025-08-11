@@ -1460,9 +1460,9 @@ survey_df_age_education = survey_df_age_education[survey_df_age_education['emplo
 
 survey_df_age_education['unemployment_status'] = survey_df_age_education['employment_status_description'].map({'employed': 0, 'unemployed': 1})
 
-survey_df_age_education['is_bachelors'] = (survey_df_age_education['education_attainment_description']=='bachelors').astype(int)
+survey_df_age_education['is_bachelors'] = (survey_df_age_education['education_attainment_description']=='bachelors_degree').astype(int)
 
-survey_df_age_education['is_masters'] = (survey_df_age_education['education_attainment_description']=='masters').astype(int)
+survey_df_age_education['is_masters'] = (survey_df_age_education['education_attainment_description']=='masters_degree').astype(int)
 
 survey_df_age_education['is_recent_graduate'] = (survey_df_age_education['age_group']=='22-25').astype(int)
 
@@ -1501,16 +1501,6 @@ survey_df_age_education['education_attainment_description'] = survey_df_age_educ
 # Only keep observations with bachelor's or master's degrees
 survey_df_age_education = survey_df_age_education[(survey_df_age_education['education_attainment_description']=='bachelors_degree') | (survey_df_age_education['education_attainment_description']=='masters_degree')]
 
-# survey_df_age_education['education_attainment_group'] = np.where(
-#     survey_df_age_education['education_attainment_description'] == 'masters_degree',
-#     'masters',
-#     np.where(
-#         survey_df_age_education['education_attainment_description'] == 'bachelors_degree',
-#         'bachelors',
-#         'lower than bachelors'
-#     )
-# )
-
 survey_df_age_education['employment_status_description'] = survey_df_age_education['employment_status'].map(employment_status_mapping)
 
 # Exclude observations not in labor force
@@ -1518,11 +1508,9 @@ survey_df_age_education = survey_df_age_education[survey_df_age_education['emplo
 
 survey_df_age_education['unemployment_status'] = survey_df_age_education['employment_status_description'].map({'employed': 0, 'unemployed': 1})
 
-survey_df_age_education['is_bachelors'] = (survey_df_age_education['education_attainment_description']=='bachelors').astype(int)
+survey_df_age_education['is_bachelors'] = (survey_df_age_education['education_attainment_description']=='bachelors_degree').astype(int)
 
-survey_df_age_education['is_masters'] = (survey_df_age_education['education_attainment_description']=='masters').astype(int)
-
-# survey_df_age_education['is_lower_than_bachelors'] = (survey_df_age_education['education_attainment_group']=='lower than bachelors').astype(int)
+survey_df_age_education['is_masters'] = (survey_df_age_education['education_attainment_description']=='masters_degree').astype(int)
 
 survey_df_age_education['is_recent_graduate'] = (survey_df_age_education['age_group']=='22-25').astype(int)
 
@@ -1699,6 +1687,81 @@ print(ae_test_meanunemployment.values)
 ae_test_meanunemployment = ae_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw'])
 print(ae_test_meanunemployment.values)
 ```
+
+### Recent Graduate - Education model - Plot predictive vs. unemployment rate in the test data
+```python
+black_obs = race_test_idata.constant_data['black_obs'].values
+white_obs = race_test_idata.constant_data['white_obs'].values  
+asian_obs = race_test_idata.constant_data['asian_obs'].values
+
+race_list = [
+    'black' if b == 1 else
+    'white' if w == 1 else
+    'asian' if a == 1 else None
+    for b, w, a in zip(black_obs, white_obs, asian_obs)
+]
+
+rate_df = pd.DataFrame({
+    'race_list': race_list, 
+    'y_predict': race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, 
+    'y_true': race_test_idata.observed_data['unemployment'].values
+    })
+race_rate_df = rate_df.groupby('race_list')[['y_predict','y_true']].mean().reset_index()
+race_rate_df_long = race_rate_df.melt(id_vars="race_list", var_name="y_label", value_name="unemployment_rate_mean")
+
+# Bar plot
+ax = pw.Brick(figsize=(6, 3))
+sns.barplot(
+    x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
+    alpha=0.9, ax=ax,
+    palette={"y_predict": "skyblue", "y_true": "blue"}
+);
+ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
+```
+
+```{python}
+#| label: fig-bar-recent-graduate-education-model
+#| fig-cap: Bar Plot: Predictive Unemployment Rate vs. True Rate By Recent Graduate and Education Level
+#| fig-alt: Plot the unemployment rate means predicted by race PGM model and the survey results
+
+bachelors_obs = ae_test_idata.constant_data['is_bachelors_obs'].values
+masters_obs = ae_test_idata.constant_data['is_masters_obs'].values  
+
+education_list = [
+    'Bachelors' if b == 1 else
+    'Masters' if m == 1 else None
+    for b, m in zip(bachelors_obs, masters_obs)
+]
+
+recent_graduate_obs = ae_test_idata.constant_data['recent_graduate_obs'].values
+
+recent_graduate_list = [
+    'Recent graduate' if r ==1 else
+    'Not Recent graduate'  
+    for r in recent_graduate_obs
+]
+
+ae_df = pd.DataFrame({
+    'education_list': education_list, 
+    'recent_graduate_list': recent_graduate_list, 
+    'y_predict': ae_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, 
+    'y_true': ae_test_idata.observed_data['unemployment'].values
+    })
+
+ae_rate_df = ae_df.groupby(['education_list','recent_graduate_list'])[['y_predict','y_true']].mean().reset_index()
+ae_rate_df_long = ae_rate_df.melt(id_vars=["education_list", "recent_graduate_list"], var_name="y_label", value_name="unemployment_rate_mean")
+
+# # Bar plot
+# ax = pw.Brick(figsize=(6, 3))
+# sns.barplot(
+#     x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
+#     alpha=0.9, ax=ax,
+#     palette={"y_predict": "skyblue", "y_true": "blue"}
+# );
+# ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
+# ax.savefig()
+```
+The bar plot above (@fig-bar-recent-graduate-model) 
 
 ## References {.unnumbered}
 
