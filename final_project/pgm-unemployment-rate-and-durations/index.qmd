@@ -1689,34 +1689,65 @@ print(ae_test_meanunemployment.values)
 ```
 
 ### Recent Graduate - Education model - Plot predictive vs. unemployment rate in the test data
-```python
-black_obs = race_test_idata.constant_data['black_obs'].values
-white_obs = race_test_idata.constant_data['white_obs'].values  
-asian_obs = race_test_idata.constant_data['asian_obs'].values
 
-race_list = [
-    'black' if b == 1 else
-    'white' if w == 1 else
-    'asian' if a == 1 else None
-    for b, w, a in zip(black_obs, white_obs, asian_obs)
+```python
+bachelors_obs = ae_test_idata.constant_data['is_bachelors_obs'].values
+masters_obs = ae_test_idata.constant_data['is_masters_obs'].values  
+
+education_list = [
+    'Bachelors' if b == 1 else
+    'Masters' if m == 1 else None
+    for b, m in zip(bachelors_obs, masters_obs)
 ]
 
-rate_df = pd.DataFrame({
-    'race_list': race_list, 
-    'y_predict': race_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, 
-    'y_true': race_test_idata.observed_data['unemployment'].values
+recent_graduate_obs = ae_test_idata.constant_data['recent_graduate_obs'].values
+
+recent_graduate_list = [
+    'Recent graduate' if r ==1 else
+    'Not Recent graduate'  
+    for r in recent_graduate_obs
+]
+
+ae_df = pd.DataFrame({
+    'education_list': education_list, 
+    'recent_graduate_list': recent_graduate_list, 
+    'y_predict': ae_test_idata.posterior_predictive['unemployment'].mean(dim=['chain','draw']).values, 
+    'y_true': ae_test_idata.observed_data['unemployment'].values
     })
-race_rate_df = rate_df.groupby('race_list')[['y_predict','y_true']].mean().reset_index()
-race_rate_df_long = race_rate_df.melt(id_vars="race_list", var_name="y_label", value_name="unemployment_rate_mean")
+
+ae_rate_df = ae_df.groupby(['education_list','recent_graduate_list'])[['y_predict','y_true']].mean().reset_index()
+ae_rate_df_long = ae_rate_df.melt(id_vars=["education_list", "recent_graduate_list"], var_name="y_label", value_name="unemployment_rate_mean")
 
 # Bar plot
-ax = pw.Brick(figsize=(6, 3))
+fig, axes = plt.subplots(1, 2, figsize = (10, 6), sharey=True)
+## Bachelor's plot
 sns.barplot(
-    x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
-    alpha=0.9, ax=ax,
-    palette={"y_predict": "skyblue", "y_true": "blue"}
-);
-ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
+     x="recent_graduate_list", y='unemployment_rate_mean', hue='y_label', 
+     data=ae_rate_df_long[ae_rate_df_long['education_list']=='Bachelors'],
+     alpha=0.9,
+     ax=axes[0],
+     palette={"y_predict": "skyblue", "y_true": "blue"}
+)
+axes[0].set_title("Bachelors")
+axes[0].set_ylabel("Unemployment Rate Mean")
+axes[0].set_xlabel("Recent Graduate Status")
+axes[0].legend(title="Data Type")
+## Master's plot
+sns.barplot(
+     x="recent_graduate_list", y='unemployment_rate_mean', hue='y_label', 
+     data=ae_rate_df_long[ae_rate_df_long['education_list']=='Masters'],
+     alpha=0.9,
+     ax=axes[1],
+     palette={"y_predict": "lightcoral", "y_true": "red"}
+)
+axes[1].set_title("Masters")
+axes[1].set_xlabel("Recent Graduate Status")
+axes[1].legend(title='Data Type') 
+
+fig.suptitle("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean", fontsize=16, y = 1.02)
+
+# plt.tight_layout()
+# plt.show()
 ```
 
 ```{python}
@@ -1751,17 +1782,39 @@ ae_df = pd.DataFrame({
 ae_rate_df = ae_df.groupby(['education_list','recent_graduate_list'])[['y_predict','y_true']].mean().reset_index()
 ae_rate_df_long = ae_rate_df.melt(id_vars=["education_list", "recent_graduate_list"], var_name="y_label", value_name="unemployment_rate_mean")
 
-# # Bar plot
-# ax = pw.Brick(figsize=(6, 3))
-# sns.barplot(
-#     x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
-#     alpha=0.9, ax=ax,
-#     palette={"y_predict": "skyblue", "y_true": "blue"}
-# );
-# ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
-# ax.savefig()
+# Bar plot
+fig, axes = plt.subplots(1, 2, figsize = (10, 6), sharey=True)
+## Bachelor's plot
+sns.barplot(
+     x="recent_graduate_list", y='unemployment_rate_mean', hue='y_label', 
+     data=ae_rate_df_long[ae_rate_df_long['education_list']=='Bachelors'],
+     alpha=0.9,
+     ax=axes[0],
+     palette={"y_predict": "skyblue", "y_true": "blue"}
+)
+axes[0].set_title("Bachelors")
+axes[0].set_ylabel("Unemployment Rate Mean")
+axes[0].set_xlabel("Recent Graduate Status")
+axes[0].legend(title="Data Type")
+## Master's plot
+sns.barplot(
+     x="recent_graduate_list", y='unemployment_rate_mean', hue='y_label', 
+     data=ae_rate_df_long[ae_rate_df_long['education_list']=='Masters'],
+     alpha=0.9,
+     ax=axes[1],
+     palette={"y_predict": "lightcoral", "y_true": "red"}
+)
+axes[1].set_title("Masters")
+axes[1].set_xlabel("Recent Graduate Status")
+axes[1].legend(title='Data Type') 
+
+fig.suptitle("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean", fontsize=16, y = 1.02)
+
+plt.tight_layout()
+plt.show()
+
 ```
-The bar plot above (@fig-bar-recent-graduate-model) 
+The bar plot above (@fig-bar-recent-graduate-model) shows that the model predicts unemployment rates for individuals in the labor force with a Bachelor's degree as their highest educational attainment quite accurately, with recent graduates (aged 22–25) exhibiting notably higher unemployment than non-recent graduates. For individuals with a Master's degree, the model performs well for non-recent graduates but shows a larger gap in predictions for recent graduates, likely due to limited training data. Nevertheless, the model captures the real-world trend that recent graduates face greater challenges in the job market compared to older cohorts.
 
 ## References {.unnumbered}
 
