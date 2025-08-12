@@ -1646,7 +1646,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-The bar plot above (@fig-bar-recent-graduate-model) shows that the model predicts unemployment rates for individuals in the labor force with a Bachelor's degree as their highest educational attainment quite accurately, with recent graduates (aged 22–25) exhibiting notably higher unemployment than non-recent graduates. For individuals with a Master's degree, the model performs well for non-recent graduates but shows a larger gap in predictions for recent graduates, likely due to limited training data. Nevertheless, the model captures the real-world trend that recent graduates face greater challenges in the job market compared to older cohorts.
+The bar plot above (@ig-bar-recent-graduate-education-model) shows that the model predicts unemployment rates for individuals in the labor force with a Bachelor's degree as their highest educational attainment quite accurately, with recent graduates (aged 22–25) exhibiting notably higher unemployment than non-recent graduates. For individuals with a Master's degree, the model performs well for non-recent graduates but shows a larger gap in predictions for recent graduates, likely due to limited training data. Nevertheless, the model captures the real-world trend that recent graduates face greater challenges in the job market compared to older cohorts.
 
 ## References {.unnumbered}
 
