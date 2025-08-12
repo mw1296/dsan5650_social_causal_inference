@@ -6,6 +6,9 @@ execute:
   echo: true
   eval: true
   output: true
+  error: true
+  verbos: true
+  cache: false
 
 format:
   html:

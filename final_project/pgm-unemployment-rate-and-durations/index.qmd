@@ -1,5 +1,5 @@
 ---
-title: "Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate and durations"
+title: "Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate"
 author:
     name: Mengjia Wei
     email: mw1296@georgetown.edu
@@ -11,7 +11,7 @@ keywords:
   - Industry
   - Causal Inference
 abstract: |
-   This study investigates the causal relationships between race, industry, and unemployment rates in the United States by applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we construct conditional dependence networks to examine two primary dimensions: racial disparities and industry-specific unemployment dynamics. The analysis first explores the effect of race on unemployment disparities, followed by a sectoral analysis focused on Educational and Health Services, Financial Activities, Public Administration, Information, Leisure and Hospitality, Manufacturing, Professional and Business Services, Transportation and Utilities, and Wholesale and Retail Trade. This study aims to identify whether certain groups—such as Black workers and those employed in Leisure and Hospitality—face heightened unemployment risk, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on BLS Current Population Survey (CPS) data from 2015 to 2025. Findings reveal significant causal effects between race and industry on unemployment. In particular, Black workers in the Leisure and Hospitality sector face notably higher unemployment vulnerability compared to their White and Asian counterparts. Moreover, Leisure and Hospitality exhibits the strongest positive causal effect on unemployment likelihood. These results contribute to the growing literature leveraging PGMs for social inference (e.g., Li et al., 2022), and demonstrate the model’s utility in uncovering structural labor market inequalities across time and population subgroups.
+   This study investigates the causal relationships between race, industry, recent graduate, education attainment and unemployment rates in the United States by applying probabilistic graphical modeling (PGM) to uncover latent dependency structures across demographic and industry variables. Using a PGM framework, we construct conditional dependence networks to examine two primary dimensions: racial disparities and industry-specific unemployment dynamics. The analysis first explores the effect of race on unemployment disparities, followed by a sectoral analysis focused on Educational and Health Services, Financial Activities, Public Administration, Information, Leisure and Hospitality, Manufacturing, Professional and Business Services, Transportation and Utilities, and Wholesale and Retail Trade. This study aims to identify whether certain groups—such as Black workers and those employed in Leisure and Hospitality—face heightened unemployment risk, providing a more comprehensive view of labor market hardship. The model estimates the strength and direction of probabilistic dependencies using Bayesian structure learning algorithms, based on BLS Current Population Survey (CPS) data from 2015 to 2025. Findings reveal significant causal effects between race and industry on unemployment. In particular, Black workers in the Leisure and Hospitality sector face notably higher unemployment vulnerability compared to their White and Asian counterparts. Moreover, Leisure and Hospitality exhibits the strongest positive causal effect on unemployment likelihood. This study also explores the causal inference of the recent graduates on unemployment rate under the interactive effect with their education attainment (Bachelor's or Master's) in order to understand whether recent graduates have higher unemployment rate than non-recent graduates in 2025, and the difference between persons who have Bachelor's degree vs. those with Master's degree. These results contribute to the growing literature leveraging PGMs for social inference (e.g., Li et al., 2022), and demonstrate the model’s utility in uncovering structural labor market inequalities across population subgroups.
 
 date: last-modified
 bibliography: references.bib
@@ -729,133 +729,20 @@ pm.model_to_graphviz(unemployment_race_model)
 pm.model_to_graphviz(unemployment_race_model)
 ```
 
+
 ### Race model - Estimate model parameters
 ```python
 print("Starting Race Model Sampling...")
 with unemployment_race_model:
-    race_idata = pm.sample(random_seed=5650)
+    race_idata = pm.sample(tune =500, draw = 500, random_seed=5650)
 ```
 
 ```{python}
 print("Starting Race Model Sampling...")
 with unemployment_race_model:
-    race_idata = pm.sample(random_seed=5650)
+    race_idata = pm.sample(tune =500, draw = 500, random_seed=5650)
 ```
 
-```python
-# Analyze Results and Visualize
-print("\n--- Model Summary (Race Model) ---")
-display(pd.DataFrame(az.summary(race_idata)))
-```
-
-```{python}
-#| label: tbl-race-model-params
-#| tbl-cap: "Estimated Parameters of Race Model"
-#| tbl-col: true
-#| tbl-center: true
-
-# Posterior summary
-print("\n--- Model Summary (Race Model) ---")
-display(pd.DataFrame(az.summary(race_idata)))
-```
-@tbl-race-model-params shows posterior distribution on train data including mu_population_log_odds, beta, p_unemployment
-
-
-```python
-# Trace plot
-import matplotlib.pyplot as plt
-fig_trace = az.plot_trace(race_idata)
-plt.suptitle('Trace plot', fontsize=16)
-plt.subplots_adjust(hspace=0.5) 
-
-# Convert to DataFrame
-race_post_df = race_idata.posterior.to_dataframe().reset_index()
-# Extract only the first chain
-race_post_df = race_post_df[race_post_df['chain'] == 0]
-# Melt
-race_post_df = race_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
-
-# Density plot
-import seaborn as sns
-import patchworklib as pw
-ax = pw.Brick(figsize=(4, 2.5));
-sns.kdeplot(
-    x="value", hue="variable", data=race_post_df, ax=ax,
-    fill=True, bw_adjust=2,
-);
-ax.set_xlabel("Log-Odds Deviation from Overall Mean")
-ax.set_ylabel("Density")
-ax.set_title("Posterior Distribution of Race Effect Deviations")
-ax.savefig()
-```
-
-```{python}
-# Trace plot
-import matplotlib.pyplot as plt
-fig_trace = az.plot_trace(race_idata)
-plt.suptitle('Trace plot', fontsize=16)
-plt.subplots_adjust(hspace=0.5) 
-
-# Convert to DataFrame
-race_post_df = race_idata.posterior.to_dataframe().reset_index()
-# Extract only the first chain
-race_post_df = race_post_df[race_post_df['chain'] == 0]
-# Melt
-race_post_df = race_post_df[['draw','beta_black', 'beta_asian', 'beta_white']].melt(id_vars=['draw'])
-
-# Density plot
-import seaborn as sns
-import patchworklib as pw
-ax = pw.Brick(figsize=(4, 2.5));
-sns.kdeplot(
-    x="value", hue="variable", data=race_post_df, ax=ax,
-    fill=True, bw_adjust=2,
-);
-ax.set_xlabel("Log-Odds Deviation from Overall Mean")
-ax.set_ylabel("Density")
-ax.set_title("Posterior Distribution of Race Effect Deviations")
-ax.savefig()
-
-```
-
-The posterior distributions of racial group mean log-odds for unemployment reveal clear deviations, with the Black population exhibiting a higher rate compared to both the White and Asian populations.
-
-### Race model - Generate Posterior Predictive Distribution for Training Data
-```python
-# posterior predictive distributions
-with unemployment_race_model:
-    race_postpred_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
-display(pd.DataFrame(az.summary(race_postpred_idata)).head(10))
-```
-
-```{python}
-#| label: tbl-race-model-posterior-distribution
-#| tbl-cap: "Posterior predictive distributions of Race Model"
-#| tbl-col: true
-#| tbl-center: true
-
-# posterior predictive distributions on train data
-with unemployment_race_model:
-    race_postpred_idata = pm.sample_posterior_predictive(race_idata, random_seed=5650)
-display(pd.DataFrame(az.summary(race_postpred_idata)).head(10))
-```
-@tbl-race-model-posterior-distribution shows a sample of posterior predictive means on train data
-
-```python
-# Chcek train posterior mean vs. mena of survey train data
-print(f"posterior_unemployment_mean on train data: {float(race_postpred_idata.posterior_predictive['unemployment'].mean().values):.6f}")
-
-print(f'unemployment_mean on train data: {y_train.mean():.6f}')
-```
-
-```{python}
-# Chcek train posterior mean vs. mena of survey train data
-print(f"posterior_unemployment_mean on train data: {float(race_postpred_idata.posterior_predictive['unemployment'].mean().values):.6f}")
-
-print(f'unemployment_mean on train data: {y_train.mean():.6f}')
-```
-
-The PGM posterior predictive unemployement mean on train data is very close to the calculated unemployment mean. Next we are testing with test data
 
 ### Race model - Extract Posterior Predictive Distribution on Test data
 
@@ -923,18 +810,24 @@ race_rate_df = rate_df.groupby('race_list')[['y_predict','y_true']].mean().reset
 race_rate_df_long = race_rate_df.melt(id_vars="race_list", var_name="y_label", value_name="unemployment_rate_mean")
 
 # Bar plot
-ax = pw.Brick(figsize=(6, 3))
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create the bar plot
+fig, ax = plt.subplots(figsize=(6, 3))
 sns.barplot(
     x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
     alpha=0.9, ax=ax,
     palette={"y_predict": "skyblue", "y_true": "blue"}
-);
+)
 ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
+plt.tight_layout()
+plt.show()
 ```
 
 ```{python}
 #| label: fig-bar-race-model
-#| fig-cap: Bar Plot: Predictive Unemployment Rate vs. True Rate By Races
+#| fig-cap: Bar Plot - Predictive Unemployment Rate vs. True Rate By Races
 #| fig-alt: Plot the unemployment rate means predicted by race PGM model and the survey results
 
 black_obs = race_test_idata.constant_data['black_obs'].values
@@ -957,14 +850,19 @@ race_rate_df = rate_df.groupby('race_list')[['y_predict','y_true']].mean().reset
 race_rate_df_long = race_rate_df.melt(id_vars="race_list", var_name="y_label", value_name="unemployment_rate_mean")
 
 # Bar plot
-ax = pw.Brick(figsize=(6, 3))
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create the bar plot
+fig, ax = plt.subplots(figsize=(6, 3))
 sns.barplot(
     x="race_list", y='unemployment_rate_mean', hue='y_label', data=race_rate_df_long,
     alpha=0.9, ax=ax,
     palette={"y_predict": "skyblue", "y_true": "blue"}
-);
+)
 ax.set_title("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' mean")
-ax.savefig()
+plt.tight_layout()
+plt.show()
 ```
 The bar plot above (@fig-bar-race-model) demonstrates that the PGM race model predicts unemployment rates well. It accurately captures the highest unemployment rate for the Black race, closely matching the survey data. However, the model tends to overestimate the unemployment rate for the Asian group compared to the observed values.
 
@@ -1141,7 +1039,6 @@ pm.model_to_graphviz(unemployment_industry_model)
 ## 4.Visualize the PGM
 display(pm.model_to_graphviz(unemployment_industry_model))
 ```
-
 ### Industry model - Estimate model parameters
 ```python
 print("Starting Industry Model Sampling...")
@@ -1155,41 +1052,6 @@ with unemployment_industry_model:
     industry_idata = pm.sample(tune = 500, draws=500, random_seed=5650) # reduce the draws due to the size of the data
 ```
 
-```python
-print("\n--- Model Summary (Industry Model) ---")
-# Pring summary of the trace
-industry_idata_alpha_summary = az.summary(
-    industry_idata,
-    var_names=['alpha_industry'],
-    kind="stats", 
-    round_to=2
-)
-industry_idata_alpha_summary['mean'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['mean'])) # convert logit to probability
-industry_idata_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_3%'])) # convert logit to probability
-industry_idata_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_97%'])) # convert logit to probability
-display(industry_idata_alpha_summary)
-```
-
-```{python}
-#| label: tbl-industry-trace-summary
-#| tbl-cap: "Estimated Parameters of Industry Model"
-#| tbl-col: true
-#| tbl-center: true
-
-print("\n--- Model Summary (Industry Model) ---")
-# Pring summary of the trace
-industry_idata_alpha_summary = az.summary(
-    industry_idata,
-    var_names=['alpha_industry'],
-    kind="stats", 
-    round_to=2
-)
-industry_idata_alpha_summary['mean'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['mean'])) # convert logit to probability
-industry_idata_alpha_summary['hdi_3%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_3%'])) # convert logit to probability
-industry_idata_alpha_summary['hdi_97%'] = 1 / (1 + np.exp(-industry_idata_alpha_summary['hdi_97%'])) # convert logit to probability
-display(industry_idata_alpha_summary)
-```
-The provided trace summary (@tbl-industry-trace-summary) details the posterior estimates for the alpha_industry parameters, which represent the estimated industry-specific parameters for unemployment probability. For example, 'Leisure and hospitality' has a mean of 0.056, while 'Public administration' has a mean of 0.018. The sd, hdi_3% and hdi_97% are consistently quite narrow across all industries, (e.g., 'Leisure and hospitality' from 0.055 to 0.059, a range of 0.004). This indicates a strong concentration of posterior probability around the mean estimates.
 
 ```python
 # Posterior mean
@@ -1257,55 +1119,25 @@ plt.tight_layout()
 plt.show()
 ```
 
+### Industry model - Extract Posterior Predictive Distribution on Test data
+
 ```python
-# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
-trace_industries= ['Leisure and hospitality',
-              'Financial activities',
-              'Public administration',
-              'Information']
-## create subset of the trace summary with the selected industries alpha transformed to probabilities
-alpha_industry_subset = 1 / (1 + np.exp(-industry_idata.posterior['alpha_industry'].sel(industry=trace_industries)))
-import xarray as xr
-trace_for_plot = az.InferenceData(
-    posterior=xr.Dataset(
-        data_vars={
-            'sigma': industry_idata.posterior['sigma'],
-            'alpha_industry': alpha_industry_subset
-        }
-    )
-)
-az.plot_trace(trace_for_plot)
-plt.tight_layout()
-plt.show()
+# Update to test data
+with unemployment_industry_model:
+    pm.set_data({"unemployment_obs": y_test_ind,
+                 "industry_idx_obs": X_test_ind['industry_idx']})
+with unemployment_industry_model:
+    industry_test_idata = pm.sample_posterior_predictive(industry_idata, random_seed=5650)
 ```
 
 ```{python}
-#| label: fig-industry-pgm-boxplot
-#| fig-cap: Estimated Industry-Specific Unemployment Rate (Adaptive Pooliing)
-#| fig-alt: Plot the boxplot of the estimated unemployment rates by industries
-
-# Plot the trace for Information, Leisure & Hospitality, Government Administration and Financial services
-trace_industries= ['Leisure and hospitality',
-              'Financial activities',
-              'Public administration',
-              'Information']
-## create subset of the trace summary with the selected industries alpha transformed to probabilities
-alpha_industry_subset = 1 / (1 + np.exp(-industry_idata.posterior['alpha_industry'].sel(industry=trace_industries)))
-import xarray as xr
-trace_for_plot = az.InferenceData(
-    posterior=xr.Dataset(
-        data_vars={
-            'sigma': industry_idata.posterior['sigma'],
-            'alpha_industry': alpha_industry_subset
-        }
-    )
-)
-az.plot_trace(trace_for_plot)
-plt.tight_layout()
-plt.show()
+# Update to test data
+with unemployment_industry_model:
+    pm.set_data({"unemployment_obs": y_test_ind,
+                 "industry_idx_obs": X_test_ind['industry_idx']})
+with unemployment_industry_model:
+    industry_test_idata = pm.sample_posterior_predictive(industry_idata, random_seed=5650)
 ```
-
-The PGM estimated unemployment alpha parameter graphed in @fig-industry-pgm-scatter and @fig-fig-industry-pgm-boxplot reveals that the model infers that the 'Leisure and Hospitality' industry has the highest positive causal effect on unemployment likelihood. Conversely, 'Public Administration' and 'Financial Services' show a negative causal influence, resulting in lower estimated unemployment rates. The 'Information' industry, while having the second-highest mean unemployment, exhibits the widest credible interval, indicating greater uncertainty in quantifying its causal impact on employment stability.
 
 ### Industry model - Extract Posterior Predictive Distribution on Test data
 
@@ -1391,7 +1223,7 @@ plt.tight_layout()
 
 ```{python}
 #| label: fig-scatter-industry-unemployment
-#| fig-cap: Scatter Plot: Predictive Unemployment Rate vs. True Rate By Industries
+#| fig-cap: Scatter Plot - Predictive Unemployment Rate vs. True Rate By Industries
 #| fig-alt: Plot the unemployment rate means predicted by industry PGM model and the survey results
 
 # Scatter plot
@@ -1752,7 +1584,7 @@ fig.suptitle("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' me
 
 ```{python}
 #| label: fig-bar-recent-graduate-education-model
-#| fig-cap: Bar Plot: Predictive Unemployment Rate vs. True Rate By Recent Graduate and Education Level
+#| fig-cap: Bar Plot - Predictive Unemployment Mean Rate vs. True Mean Rate By Recent Graduate and Education Level
 #| fig-alt: Plot the unemployment rate means predicted by race PGM model and the survey results
 
 bachelors_obs = ae_test_idata.constant_data['is_bachelors_obs'].values
@@ -1802,7 +1634,7 @@ sns.barplot(
      data=ae_rate_df_long[ae_rate_df_long['education_list']=='Masters'],
      alpha=0.9,
      ax=axes[1],
-     palette={"y_predict": "lightcoral", "y_true": "red"}
+     palette={"y_predict": "lightgreen", "y_true": "green"}
 )
 axes[1].set_title("Masters")
 axes[1].set_xlabel("Recent Graduate Status")
@@ -1812,8 +1644,8 @@ fig.suptitle("Rates of 'Predictive Unemployment' mean vs. 'True Unemployment' me
 
 plt.tight_layout()
 plt.show()
-
 ```
+
 The bar plot above (@fig-bar-recent-graduate-model) shows that the model predicts unemployment rates for individuals in the labor force with a Bachelor's degree as their highest educational attainment quite accurately, with recent graduates (aged 22–25) exhibiting notably higher unemployment than non-recent graduates. For individuals with a Master's degree, the model performs well for non-recent graduates but shows a larger gap in predictions for recent graduates, likely due to limited training data. Nevertheless, the model captures the real-world trend that recent graduates face greater challenges in the job market compared to older cohorts.
 
 ## References {.unnumbered}
