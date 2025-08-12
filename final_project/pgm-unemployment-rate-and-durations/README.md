@@ -1,8 +1,8 @@
-# 📘 Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate and durations
+# 📘 Causal Inference of Labor Market Inequality Using PGM: A multidimensional analysis of unemployment rate
 
 ## 📌 Overview
 
-This project investigates the causal relationship between race & industry and unemployment rate using causal inference methods such as PGM and Bayesian modeling. The goal is to understand the effect of [Race] and [Industry] on [Unemployment Vulnerability].
+This project investigates the causal relationship between race & industry and unemployment rate using causal inference methods such as PGM and Bayesian modeling. The goal is to understand the effect of [Race] and [Industry] on [Unemployment Vulnerability], as well as interactive effect between rencent/non-recent graduates and their highest education attainment on unemployment rate.
 
 ## 🗂️ Repository Structure
 
